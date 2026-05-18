@@ -19,8 +19,8 @@ Each document type has its own standalone XSD schema. PRE-TX and POST-TX data ar
 
 | File | Description |
 |------|-------------|
-| [diamond2-pdx-programmes-v1.1.xsd](diamond2-pdx-programmes-v1.1.xsd) | XSD schema for PRE-TX (Programmes) documents |
-| [diamond2-pdx-publications-v1.1.xsd](diamond2-pdx-publications-v1.1.xsd) | XSD schema for POST-TX (Publications) documents |
+| [Diamond2_PreTX_v1.1.xsd](Diamond2_PreTX_v1.1.xsd) | XSD schema for PRE-TX (Programmes) documents |
+| [Diamond2_PostTX_v1.1.xsd](Diamond2_PostTX_v1.1.xsd) | XSD schema for POST-TX (Publications) documents |
 | [Diamond2_PreTX_Example.xml](Diamond2_PreTX_Example.xml) | Example PRE-TX document |
 | [Diamond2_PostTX_Example.xml](Diamond2_PostTX_Example.xml) | Example POST-TX document |
 | [Diamond2_XML_Field_Reference_and_Implementation_Notes.docx](Diamond2_XML_Field_Reference_and_Implementation_Notes.docx) | Field-by-field reference and implementation guidance |
@@ -66,8 +66,8 @@ Document
 Validate example files against the schemas using `xmllint`:
 
 ```bash
-xmllint --schema docs/diamond2-pdx-programmes-v1.1.xsd --noout docs/Diamond2_PreTX_Example.xml
-xmllint --schema docs/diamond2-pdx-publications-v1.1.xsd --noout docs/Diamond2_PostTX_Example.xml
+xmllint --schema docs/Diamond2_PreTX_v1.1.xsd --noout docs/Diamond2_PreTX_Example.xml
+xmllint --schema docs/Diamond2_PostTX_v1.1.xsd --noout docs/Diamond2_PostTX_Example.xml
 ```
 
 ## XSD 1.0 limitations
