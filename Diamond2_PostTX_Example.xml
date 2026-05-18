@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document 
+  schemaVersion="1.0"
+  createdAt="2024-11-24T10:30:00Z"
+  xmlns="urn:cdn:pdx:1.0">
+  
+  <Publications>
+    <Publication 
+      episodeId="episode789" 
+      availabilityMode="broadcast"
+      publicationId="pub-001"
+      isRepeat="false"
+      isPrimary="true">
+      
+      <PublicationDateTime>2024-10-05T21:00:00Z</PublicationDateTime>
+      
+      <ChannelPlatforms>
+        <ChannelPlatform label="BBC One" id="bbc_one">
+          <SubChannel label="Wales" id="bbc_one_wales"/>
+          <SubChannel label="Scotland" id="bbc_one_scotland"/>
+        </ChannelPlatform>
+      </ChannelPlatforms>
+      
+    </Publication>
+  </Publications>
+</Document>

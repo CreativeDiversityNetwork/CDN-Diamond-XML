@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document 
+  schemaVersion="1.0"
+  messageID="msg-2024-11-24-001"
+  createdAt="2024-11-24T10:30:00Z"
+  xmlns="urn:cdn:pdx:1.0">
+  
+  <Programmes commissioningDepartment="Drama">
+    <Supplier id="supplier123" name="Example Productions Ltd" companyNumber="12345678">
+      <Project 
+        id="project456" 
+        name="Line of Duty Series 6" 
+        medium="video"
+        number="6"
+        numberOfEpisodes="7"
+        type="series">
+        
+        <GreenlightDate>2024-03-15</GreenlightDate>
+        <DeliveryDate>2024-09-01</DeliveryDate>
+        
+        <Genres>
+          <Genre type="Ofcom">Drama</Genre>
+          <Genre type="OfcomSuper">Entertainment</Genre>
+          <Genre type="Commissioner">Police Drama</Genre>
+        </Genres>
+        
+        <!-- Episode with genre overrides: these replace the project-level genres for this episode -->
+        <Episode
+          id="episode789"
+          name="Episode 1"
+          slotLength="PT1H"
+          number="1">
+
+          <Tags>
+            <Tag name="series name">Line of Duty</Tag>
+            <Tag name="tx season">Autumn 2024</Tag>
+          </Tags>
+
+          <ReleaseDate>2024-09-15</ReleaseDate>
+
+          <Genres>
+            <Genre type="Ofcom">Crime</Genre>
+            <Genre type="Commissioner">Police Drama</Genre>
+          </Genres>
+        </Episode>
+
+        <!-- Episode without genres: inherits the project-level genres (Drama / Entertainment / Police Drama) -->
+        <Episode
+          id="episode790"
+          name="Episode 2"
+          slotLength="PT1H"
+          number="2">
+
+          <Tags>
+            <Tag name="series name">Line of Duty</Tag>
+            <Tag name="tx season">Autumn 2024</Tag>
+          </Tags>
+
+          <ReleaseDate>2024-09-22</ReleaseDate>
+        </Episode>
+        
+      </Project>
+    </Supplier>
+  </Programmes>
+</Document>

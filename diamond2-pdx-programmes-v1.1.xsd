@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:cdn="urn:cdn:pdx:1.0"
+           targetNamespace="urn:cdn:pdx:1.0"
+           elementFormDefault="qualified"
+           version="1.0">
+
+  <xs:annotation>
+    <xs:documentation>
+      Diamond 2 Programme Data Exchange (PDX) Schema v1.0 — PRE-TX (Programmes)
+
+      This schema defines the XML structure for exchanging production metadata (PRE-TX)
+      between broadcasters and Diamond 2 / TEP (The Everyone Project).
+
+      This is the standalone PRE-TX schema. The Document root element accepts only
+      Programmes data. For the combined schema supporting both PRE-TX and POST-TX,
+      see diamond2-pdx-schema-v1.1.xsd.
+
+      Date: 12.04.26
+      Version: 5.2
+
+      XSD Version: 1.0
+      Note: Some business rule constraints (e.g., genre count restrictions, conditional
+      requirements when remove="true") cannot be enforced by XSD 1.0 and are documented
+      within the schema. These constraints will be validated by TEP during XML ingestion.
+
+      Element Ordering: Ideally, this schema would allow all child elements to appear in any
+      order. However, due to limitations in XSD 1.0, containers with repeating child elements
+      (maxOccurs > 1) must use xs:sequence which mandates element order. Where possible
+      (Episode type), xs:all has been used to allow flexible ordering.
+      For containers that contain repeating elements (e.g., multiple Projects, Episodes,
+      Genres, Tags), element order must follow the schema definition,
+      though in practice this typically reflects the natural/logical ordering anyway.
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- Root Document Element -->
+  <xs:element name="Document">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="cdn:Programmes" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="schemaVersion" type="xs:string" use="required" fixed="1.0"/>
+      <xs:attribute name="messageID" type="xs:string" use="optional">
+        <xs:annotation>
+          <xs:documentation>
+            Optional identifier for broadcaster's internal use. Not ingested into TEP.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="createdAt" type="xs:dateTime" use="optional">
+        <xs:annotation>
+          <xs:documentation>Optional creation timestamp.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="updatedAt" type="xs:dateTime" use="optional">
+        <xs:annotation>
+          <xs:documentation>Optional update timestamp.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="uuid" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ================================================================ -->
+  <!-- PRE-TX: Programme Metadata Section                               -->
+  <!-- ================================================================ -->
+
+  <xs:element name="Programmes">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Supplier" type="cdn:SupplierType" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="commissioningDepartment" type="xs:string" use="optional">
+        <xs:annotation>
+          <xs:documentation>
+            Optional commissioning department identifier (e.g., "Drama", "Entertainment").
+            Stored in broadcaster-specific namespaces in TEP.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="uuid" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="SupplierType">
+    <xs:sequence>
+      <xs:element name="Project" type="cdn:ProjectType" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Broadcaster-specific internal supplier ID. Stored in broadcaster-specific namespaces in TEP.
+          The Supplier identified here will be granted access to add cast and crew details
+          to all projects under this Supplier in TEP.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="name" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          Optional supplier name. Used only for initial reconciliation with existing TEP accounts.
+          Ignored after linking is complete.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="companyNumber" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          Optional company registration number. Used only for initial reconciliation with existing TEP accounts.
+          Ignored after linking is complete.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="uuid" type="xs:string" use="optional"/>
+  </xs:complexType>
+
+  <xs:complexType name="ProjectType">
+    <xs:sequence>
+      <xs:element name="GreenlightDate" type="xs:date" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Optional greenlight date for the project/series. If omitted, this will be inferred
+            as the date when this project ID was first sent to TEP in an XML file.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="DeliveryDate" type="xs:date" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Optional target date for delivery of first finished content to the broadcaster.
+            This need only be the best guess of the target date when the first bit of finished
+            content will be delivered. Production companies will be asked to complete this
+            if not supplied by the broadcaster.
+            IMPORTANT: Broadcasters who do not have this data should NOT include an empty element,
+            as this would cause any date provided by the production company to be blanked out
+            when the project data is passed in the XML feed.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Genres" type="cdn:GenresType" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Optional genres container at project level. Must include exactly one Ofcom genre if present.
+            OfcomSuper genre is optional (derived from Ofcom if absent).
+            Commissioner genre is optional (maximum one allowed).
+            These project-level genres can be overridden on a per-episode basis.
+            If omitted, project genre will be populated from the first episode's genre data.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Episode" type="cdn:EpisodeType" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Broadcaster-specific internal project/series ID.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="name" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Project/series name (e.g., "Series 6").</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="medium" use="required">
+      <xs:annotation>
+        <xs:documentation>Content medium type.</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="audio"/>
+          <xs:enumeration value="video"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="number" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>Optional series number (e.g., "6").</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="numberOfEpisodes" type="xs:positiveInteger" use="optional">
+      <xs:annotation>
+        <xs:documentation>Optional total number of episodes in this project/series.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="type" use="optional">
+      <xs:annotation>
+        <xs:documentation>Optional project type.</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="series"/>
+          <xs:enumeration value="special"/>
+          <xs:enumeration value="feature film"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="uuid" type="xs:string" use="optional"/>
+    <xs:attribute name="remove" type="xs:boolean" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          Set to "true" to delete a previously submitted project record.
+          When removing, only the id attribute is required — all other attributes
+          and child elements should be omitted.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="EpisodeType">
+    <xs:all>
+      <xs:element name="Tags" type="cdn:TagsType" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Optional tags for broadcaster-specific reporting on arbitrary attributes.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="ReleaseDate" type="xs:date" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Optional release date. If omitted, inferred as the earliest publicationDateTime encountered in Post-TX data.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Genres" type="cdn:GenresType" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Optional genres container at episode level. If provided, overrides the project-level genres.
+            Must include exactly one Ofcom genre if present.
+            OfcomSuper genre is optional (derived from Ofcom if absent).
+            Commissioner genre is optional (maximum one allowed).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+    <xs:attribute name="id" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Broadcaster-specific internal episode ID.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="name" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Episode name/title.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="slotLength" type="xs:duration" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Slot length/duration in ISO 8601 format (e.g., "PT1H" for 1 hour).
+          Broadcast slot duration is acceptable; precise duration is not essential.
+          If duration varies per version, provide a representative duration for most versions.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="number" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>Optional episode number.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="makerId" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          Optional supplier ID of the production company creating the content.
+          Used when paperwork completion is outsourced to a different company than the content maker.
+          This field is FOR REPORTING PURPOSES ONLY and does not grant the referenced production
+          company any access to administer the project in TEP.
+          If omitted, defaults to the parent Supplier.id.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="uuid" type="xs:string" use="optional"/>
+    <xs:attribute name="remove" type="xs:boolean" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          Set to "true" to delete a previously submitted episode record.
+          When removing, only the id attribute is required — all other attributes
+          and child elements should be omitted.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="TagsType">
+    <xs:sequence>
+      <xs:element name="Tag" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:simpleContent>
+            <xs:extension base="xs:string">
+              <xs:attribute name="name" type="xs:string" use="required">
+                <xs:annotation>
+                  <xs:documentation>Tag name/key (e.g., "series name").</xs:documentation>
+                </xs:annotation>
+              </xs:attribute>
+            </xs:extension>
+          </xs:simpleContent>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="GenresType">
+    <xs:sequence>
+      <xs:element name="Genre" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:simpleContent>
+            <xs:extension base="xs:string">
+              <xs:attribute name="type" use="required">
+                <xs:annotation>
+                  <xs:documentation>
+                    Genre classification type.
+
+                    CONSTRAINTS (enforced by TEP during ingestion):
+                    - Ofcom: Mandatory, exactly one required. Validated against Ofcom's genre list.
+                    - OfcomSuper: Optional, maximum one allowed. Derived from Ofcom genre if omitted
+                      (every Ofcom genre is a child of a pre-defined supergenre parent).
+                    - Commissioner: Optional, maximum one allowed. Broadcaster-specific genre with no validation.
+
+                    Note: These count constraints cannot be enforced by XSD 1.0. An XSD 1.1 version with
+                    assertions could enforce these constraints for validators that support XSD 1.1.
+                  </xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                    <xs:enumeration value="Ofcom"/>
+                    <xs:enumeration value="OfcomSuper"/>
+                    <xs:enumeration value="Commissioner"/>
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:attribute>
+            </xs:extension>
+          </xs:simpleContent>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema>

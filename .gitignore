@@ -1,0 +1,15 @@
+# Claude Code
+CLAUDE.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# Microsoft Office temp files
+~$*.docx
+~$*.xlsx

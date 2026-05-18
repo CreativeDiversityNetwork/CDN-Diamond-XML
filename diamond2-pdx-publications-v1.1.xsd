@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:cdn="urn:cdn:pdx:1.0"
+           targetNamespace="urn:cdn:pdx:1.0"
+           elementFormDefault="qualified"
+           version="1.0">
+
+  <xs:annotation>
+    <xs:documentation>
+      Diamond 2 Programme Data Exchange (PDX) Schema v1.0 — POST-TX (Publications)
+
+      This schema defines the XML structure for exchanging transmission data (POST-TX)
+      between broadcasters and Diamond 2 / TEP (The Everyone Project).
+
+      This is the standalone POST-TX schema. The Document root element accepts only
+      Publications data. For the combined schema supporting both PRE-TX and POST-TX,
+      see diamond2-pdx-schema-v1.1.xsd.
+
+      Date: 12.04.26
+      Version: 5.2
+
+      XSD Version: 1.0
+      Note: Some business rule constraints (e.g., conditional requirements when
+      remove="true", WindowClosureDateTime only valid for onDemand) cannot be enforced
+      by XSD 1.0 and are documented within the schema. These constraints will be validated
+      by TEP during XML ingestion.
+
+      Element Ordering: Ideally, this schema would allow all child elements to appear in any
+      order. However, due to limitations in XSD 1.0, containers with repeating child elements
+      (maxOccurs > 1) must use xs:sequence which mandates element order. Where possible
+      (Publication type), xs:all has been used to allow flexible ordering.
+      For containers that contain repeating elements (e.g., multiple ChannelPlatforms),
+      element order must follow the schema definition, though in practice this typically
+      reflects the natural/logical ordering anyway.
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- Root Document Element -->
+  <xs:element name="Document">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="cdn:Publications" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="schemaVersion" type="xs:string" use="required" fixed="1.0"/>
+      <xs:attribute name="messageID" type="xs:string" use="optional">
+        <xs:annotation>
+          <xs:documentation>
+            Optional identifier for broadcaster's internal use. Not ingested into TEP.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="createdAt" type="xs:dateTime" use="optional">
+        <xs:annotation>
+          <xs:documentation>Optional creation timestamp.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="updatedAt" type="xs:dateTime" use="optional">
+        <xs:annotation>
+          <xs:documentation>Optional update timestamp.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="uuid" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ================================================================ -->
+  <!-- POST-TX: Publication/Transmission Data Section                   -->
+  <!-- ================================================================ -->
+
+  <xs:element name="Publications">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Publication" type="cdn:PublicationType" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="uuid" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="PublicationType">
+    <xs:all>
+      <xs:element name="ChannelPlatforms" type="cdn:ChannelPlatformsType"/>
+      <xs:element name="PublicationDateTime" type="xs:dateTime">
+        <xs:annotation>
+          <xs:documentation>
+            Required date and time of publication/transmission.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="WindowClosureDateTime" type="xs:dateTime" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Optional closure date/time for on-demand availability window.
+            Valid only when availabilityMode="onDemand".
+            If omitted, interpreted as indefinite availability.
+            Can be added/updated later by resubmitting with same publicationId.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+    <xs:attribute name="episodeId" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Required reference to the episode ID from the Pre-TX metadata.
+          Note: If your transmission tracking system uses version IDs (e.g., episode123/01, episode123/02),
+          remove the version suffix to provide just the episode ID (e.g., episode123).
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="availabilityMode" use="required">
+      <xs:annotation>
+        <xs:documentation>Publication availability mode.</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="broadcast"/>
+          <xs:enumeration value="onDemand"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="publicationId" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          Optional broadcaster's unique ID for this publication event.
+          Allows corrections to publication event data. Can be omitted if no scope for editing/corrections.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="isRepeat" type="xs:boolean" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          Optional boolean indicating whether this is a repeat transmission/publication.
+          Values: true (repeat) or false (first transmission/publication).
+          If omitted, the first publication record received will be automatically treated as first (isRepeat=false).
+          IMPORTANT: If your transmission records may be sent out of chronological order (i.e., a later
+          transmission sent before an earlier one), do not omit this attribute, as the first record
+          received will be marked as first transmission regardless of its actual transmission date.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="isPrimary" type="xs:boolean" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          Optional boolean indicating whether this is the primary transmission/publication for reporting purposes.
+          Values: true (primary) or false (not primary).
+          The primary publication is typically the most important broadcast (e.g., peak-time transmission
+          rather than an overnight repeat). If omitted, the first publication that is treated as first
+          (isRepeat=false or inferred as such) will be automatically marked as primary.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="uuid" type="xs:string" use="optional"/>
+    <xs:attribute name="remove" type="xs:boolean" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          Set to "true" to delete a previously submitted publication record.
+          When removing, only the publicationId attribute is required — all other
+          attributes and child elements should be omitted.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="ChannelPlatformsType">
+    <xs:sequence>
+      <xs:element name="ChannelPlatform" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>
+            Represents a channel or platform on which the content was published.
+            Multiple ChannelPlatform elements can be included if the publication
+            was broadcast on multiple channels simultaneously.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="SubChannel" minOccurs="0" maxOccurs="unbounded">
+              <xs:annotation>
+                <xs:documentation>
+                  Optional sub-channel or regional variant (e.g., regional BBC One variants).
+                  Multiple SubChannel elements can be included if the publication was broadcast
+                  on multiple sub-channels of this channel simultaneously.
+                </xs:documentation>
+              </xs:annotation>
+              <xs:complexType>
+                <xs:attribute name="label" type="xs:string" use="required">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Required human-readable sub-channel label (e.g., "Wales", "Scotland", "HD").
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="id" type="xs:string" use="optional">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Optional sub-channel identifier. If omitted, defaults to the value of the label attribute.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+              </xs:complexType>
+            </xs:element>
+          </xs:sequence>
+          <xs:attribute name="label" type="xs:string" use="required">
+            <xs:annotation>
+              <xs:documentation>
+                Required human-readable channel/platform label (e.g., "BBC One", "iPlayer", "ITV1").
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="id" type="xs:string" use="optional">
+            <xs:annotation>
+              <xs:documentation>
+                Optional channel identifier. If omitted, defaults to the value of the label attribute.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema>
