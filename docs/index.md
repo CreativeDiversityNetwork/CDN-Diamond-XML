@@ -58,7 +58,7 @@ Document
               ├── WindowClosureDateTime (on-demand only)
               └── ChannelPlatforms
                     └── ChannelPlatform
-                          └── SubChannel (regional variants)
+                          └── SubChannel (@isCore: core feed or regional variant)
 ```
 
 ## Validating XML
@@ -77,6 +77,7 @@ Several business rules cannot be expressed in XSD 1.0 and are enforced server-si
 - **Genre count constraints** — exactly one Ofcom genre required; at most one OfcomSuper; at most one Commissioner.
 - **Conditional requirements for deletion** — when `remove="true"` is set on a Project, Episode, or Publication, only the identifying ID attribute is required. The schema cannot express "if remove is true, other fields are optional." Files containing removal records will not pass schema validation; this is expected.
 - **WindowClosureDateTime** — only valid when `availabilityMode="onDemand"`.
+- **SubChannel isCore constraint** — at most one `SubChannel` per `ChannelPlatform` may carry `isCore="true"`.
 
 ## Delivery protocol
 

@@ -20,9 +20,10 @@
 
       XSD Version: 1.0
       Note: Some business rule constraints (e.g., conditional requirements when
-      remove="true", WindowClosureDateTime only valid for onDemand) cannot be enforced
-      by XSD 1.0 and are documented within the schema. These constraints will be validated
-      by TEP during XML ingestion.
+      remove="true", WindowClosureDateTime only valid for onDemand, at most one SubChannel
+      per ChannelPlatform may carry isCore="true") cannot be enforced by XSD 1.0 and are
+      documented within the schema. These constraints will be validated by TEP during XML
+      ingestion.
 
       Element Ordering: Ideally, this schema would allow all child elements to appear in any
       order. However, due to limitations in XSD 1.0, containers with repeating child elements
@@ -171,19 +172,20 @@
         </xs:annotation>
         <xs:complexType>
           <xs:sequence>
-            <xs:element name="SubChannel" minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="SubChannel" minOccurs="1" maxOccurs="unbounded">
               <xs:annotation>
                 <xs:documentation>
-                  Optional sub-channel or regional variant (e.g., regional BBC One variants).
-                  Multiple SubChannel elements can be included if the publication was broadcast
-                  on multiple sub-channels of this channel simultaneously.
+                  Required sub-channel identifying the core network feed or a regional variant.
+                  Every ChannelPlatform must include at least one SubChannel. Use isCore="true"
+                  to mark the core network feed; additional SubChannel elements represent regional
+                  variants (e.g., BBC One Wales, BBC One Scotland).
                 </xs:documentation>
               </xs:annotation>
               <xs:complexType>
                 <xs:attribute name="label" type="xs:string" use="required">
                   <xs:annotation>
                     <xs:documentation>
-                      Required human-readable sub-channel label (e.g., "Wales", "Scotland", "HD").
+                      Required human-readable sub-channel label (e.g., "Network", "Wales", "Scotland", "HD").
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>
@@ -191,6 +193,18 @@
                   <xs:annotation>
                     <xs:documentation>
                       Optional sub-channel identifier. If omitted, defaults to the value of the label attribute.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="isCore" type="xs:boolean" use="optional">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Set to "true" to indicate this SubChannel represents the core network feed
+                      (i.e., the content that goes out across the whole network rather than a
+                      regional opt-out). At most one SubChannel per ChannelPlatform may carry
+                      isCore="true". Omit or set to "false" for regional sub-channels.
+                      Note: The "at most one isCore per ChannelPlatform" constraint cannot be
+                      enforced by XSD 1.0 and is validated server-side by TEP.
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>

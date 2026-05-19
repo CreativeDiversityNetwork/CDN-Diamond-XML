@@ -1,26 +1,77 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Document 
+<Document
   schemaVersion="1.0"
   createdAt="2024-11-24T10:30:00Z"
   xmlns="urn:cdn:pdx:1.0">
-  
+
   <Publications>
-    <Publication 
-      episodeId="episode789" 
+
+    <!--
+      Example 1: Core network broadcast
+      BBC One national news at 22:00, transmitted on the core network feed.
+      The SubChannel with isCore="true" indicates this is the main network-wide feed.
+    -->
+    <Publication
+      episodeId="episode789"
       availabilityMode="broadcast"
       publicationId="pub-001"
       isRepeat="false"
       isPrimary="true">
-      
-      <PublicationDateTime>2024-10-05T21:00:00Z</PublicationDateTime>
-      
+
+      <PublicationDateTime>2024-10-05T22:00:00Z</PublicationDateTime>
+
+      <ChannelPlatforms>
+        <ChannelPlatform label="BBC One" id="bbc_one">
+          <SubChannel label="Network" id="bbc_one_network" isCore="true"/>
+        </ChannelPlatform>
+      </ChannelPlatforms>
+
+    </Publication>
+
+    <!--
+      Example 2: Regional opt-out
+      BBC One Wales rugby broadcast in the same 22:00 slot, replacing the core
+      network feed for the Wales region only. No isCore attribute — this is a
+      regional variant, not the core feed.
+    -->
+    <Publication
+      episodeId="episode790"
+      availabilityMode="broadcast"
+      publicationId="pub-002"
+      isRepeat="false"
+      isPrimary="true">
+
+      <PublicationDateTime>2024-10-05T22:00:00Z</PublicationDateTime>
+
       <ChannelPlatforms>
         <ChannelPlatform label="BBC One" id="bbc_one">
           <SubChannel label="Wales" id="bbc_one_wales"/>
-          <SubChannel label="Scotland" id="bbc_one_scotland"/>
         </ChannelPlatform>
       </ChannelPlatforms>
-      
+
     </Publication>
+
+    <!--
+      Example 3: Broadcaster with no regional sub-channels
+      Example TV at 20:00 — a channel that has no regional variants. The single
+      SubChannel with isCore="true" represents the sole network feed.
+    -->
+    <Publication
+      episodeId="episode791"
+      availabilityMode="broadcast"
+      publicationId="pub-003"
+      isRepeat="false"
+      isPrimary="true">
+
+      <PublicationDateTime>2024-10-05T20:00:00Z</PublicationDateTime>
+
+      <ChannelPlatforms>
+        <ChannelPlatform label="Example TV" id="example_tv">
+          <SubChannel label="Example TV" id="example_tv" isCore="true"/>
+        </ChannelPlatform>
+      </ChannelPlatforms>
+
+    </Publication>
+
   </Publications>
 </Document>
