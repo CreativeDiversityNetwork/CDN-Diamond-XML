@@ -19,7 +19,7 @@
         <DeliveryDate>2024-09-01</DeliveryDate>
         
         <Genres>
-          <Genre type="Ofcom">Drama</Genre>
+          <Genre type="Ofcom">DROTH</Genre>
           <Genre type="OfcomSuper">Entertainment</Genre>
           <Genre type="Commissioner">Police Drama</Genre>
         </Genres>
@@ -39,12 +39,12 @@
           <ReleaseDate>2024-09-15</ReleaseDate>
 
           <Genres>
-            <Genre type="Ofcom">Crime</Genre>
+            <Genre type="Ofcom">DRDOC</Genre>
             <Genre type="Commissioner">Police Drama</Genre>
           </Genres>
         </Episode>
 
-        <!-- Episode without genres: inherits the project-level genres (Drama / Entertainment / Police Drama) -->
+        <!-- Episode without genres: inherits the project-level genres (DROTH / Entertainment / Police Drama) -->
         <Episode
           id="episode790"
           name="Episode 2"
