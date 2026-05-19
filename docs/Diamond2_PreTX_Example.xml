@@ -20,7 +20,7 @@
         
         <Genres>
           <Genre type="Ofcom">DROTH</Genre>
-          <Genre type="OfcomSuper">Entertainment</Genre>
+          <Genre type="OfcomSuper">ENT</Genre>
           <Genre type="Commissioner">Police Drama</Genre>
         </Genres>
         
@@ -44,7 +44,7 @@
           </Genres>
         </Episode>
 
-        <!-- Episode without genres: inherits the project-level genres (DROTH / Entertainment / Police Drama) -->
+        <!-- Episode without genres: inherits the project-level genres (DROTH / ENT / Police Drama) -->
         <Episode
           id="episode790"
           name="Episode 2"
