@@ -29,7 +29,7 @@ Each document type has its own standalone XSD schema. PRE-TX and POST-TX data ar
 
 ## Schema structure
 
-Both schemas share the namespace `urn:cdn:pdx:1.2` and use XSD 1.0. The root element is always `<Document>`.
+Both schemas share the namespace `urn:cdn:pdx:v1` and use XSD 1.0. The root element is always `<Document>`.
 
 ### PRE-TX hierarchy
 
