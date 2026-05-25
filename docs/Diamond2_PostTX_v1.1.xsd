@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:cdn="urn:cdn:pdx:1.0"
-           targetNamespace="urn:cdn:pdx:1.0"
+           xmlns:cdn="urn:cdn:pdx:1.2"
+           targetNamespace="urn:cdn:pdx:1.2"
            elementFormDefault="qualified"
            version="1.0">
 

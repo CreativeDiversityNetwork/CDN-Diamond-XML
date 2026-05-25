@@ -3,7 +3,7 @@
   schemaVersion="1.0"
   messageID="msg-2024-11-24-001"
   createdAt="2024-11-24T10:30:00Z"
-  xmlns="urn:cdn:pdx:1.0">
+  xmlns="urn:cdn:pdx:1.2">
   
   <Programmes commissioningDepartment="Drama">
     <Supplier id="supplier123" name="Example Productions Ltd" companyNumber="12345678">
