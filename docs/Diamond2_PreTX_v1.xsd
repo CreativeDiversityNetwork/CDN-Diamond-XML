@@ -13,7 +13,7 @@
       between broadcasters and Diamond 2 / TEP (The Everyone Project).
 
       This is the standalone PRE-TX schema. The Document root element accepts only
-      Programmes data. For POST-TX (Publications), see Diamond2_PostTX_v1.1.xsd.
+      Programmes data. For POST-TX (Publications), see Diamond2_PostTX_v1.xsd.
 
       Date: 12.04.26
       Version: 5.2
