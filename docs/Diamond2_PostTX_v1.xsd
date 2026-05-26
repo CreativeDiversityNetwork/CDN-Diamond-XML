@@ -41,7 +41,21 @@
       <xs:sequence>
         <xs:element ref="cdn:Publications" maxOccurs="unbounded"/>
       </xs:sequence>
-      <xs:attribute name="schemaVersion" type="xs:string" use="required" fixed="1.0"/>
+      <xs:attribute name="schemaVersion" use="required">
+        <xs:annotation>
+          <xs:documentation>
+            Schema revision identifier. TEP uses this to determine which fields
+            to expect and will reject unrecognised versions. New values are added
+            here as non-breaking revisions are published.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="1.0"/>
+            <!-- add new values as future revisions ship -->
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
       <xs:attribute name="messageID" type="xs:string" use="optional">
         <xs:annotation>
           <xs:documentation>
