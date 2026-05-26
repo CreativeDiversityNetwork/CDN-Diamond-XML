@@ -162,7 +162,7 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="Episode" type="cdn:EpisodeType" maxOccurs="unbounded"/>
+      <xs:element name="Episode" type="cdn:EpisodeType" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
     <xs:attribute name="id" type="xs:string" use="required">
       <xs:annotation>

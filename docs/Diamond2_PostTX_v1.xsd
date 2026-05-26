@@ -92,11 +92,12 @@
 
   <xs:complexType name="PublicationType">
     <xs:all>
-      <xs:element name="ChannelPlatforms" type="cdn:ChannelPlatformsType"/>
-      <xs:element name="PublicationDateTime" type="xs:dateTime">
+      <xs:element name="ChannelPlatforms" type="cdn:ChannelPlatformsType" minOccurs="0"/>
+      <xs:element name="PublicationDateTime" type="xs:dateTime" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
             Required date and time of publication/transmission.
+            May be omitted only when remove="true".
           </xs:documentation>
         </xs:annotation>
       </xs:element>
