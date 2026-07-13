@@ -13,3 +13,6 @@ Thumbs.db
 # Microsoft Office temp files
 ~$*.docx
 ~$*.xlsx
+
+# LibreOffice lock files
+.~lock.*#
