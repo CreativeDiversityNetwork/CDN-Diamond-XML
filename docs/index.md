@@ -74,7 +74,7 @@ xmllint --schema docs/Diamond2_PostTX_v1.xsd --noout docs/Diamond2_PostTX_Exampl
 
 ## XSD 1.0 limitations
 
-Several business rules cannot be expressed in XSD 1.0 and are enforced server-side by TEP during ingestion:
+Several business rules cannot be expressed in XSD 1.0 and are enforced server-side by TEP during ingestion — see the [TEP Ingestion Validation](Diamond2_XML_Field_Reference_and_Implementation_Notes.md#tep-ingestion-validation) section of the Field Reference for the consolidated list. In summary:
 
 - **Genre count constraints** — exactly one Ofcom genre required; at most one OfcomSuper; at most one Commissioner.
 - **Conditional requirements for deletion** — the schema cannot express "if remove is true, other fields are optional", so some elements that are mandatory for non-removal records (such as `ChannelPlatforms` and `PublicationDateTime`) are declared optional in the XSD, and TEP enforces their presence for non-removal records at ingestion. Removal records (`remove="true"`) therefore pass XSD validation. They must still carry the object's mandatory attributes: string-typed attributes may be empty, but enumerated attributes (such as `availabilityMode`) must be given one of their permitted values. See the [Deleting Records](Diamond2_XML_Field_Reference_and_Implementation_Notes.md#deleting-records) section of the Field Reference.

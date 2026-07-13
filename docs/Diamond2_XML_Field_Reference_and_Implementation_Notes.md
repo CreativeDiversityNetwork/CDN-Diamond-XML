@@ -16,6 +16,7 @@
 | 5.10 | 13/7/2026 | Corrected the Episode slotLength removal notes: a valid ISO 8601 duration value (e.g. PT0S) is still required when removing an Episode, as an empty value will not pass XSD validation, but in the case of deletion the value is ignored (verified with xmllint against the published XSD). |
 | 5.11 | 13/7/2026 | Added note that a file may contain multiple Publications containers, as permitted by the XSD. |
 | 5.12 | 13/7/2026 | Added note that TEP cannot process multiple updates to the same project within a single Pre-TX file: consolidate to one Project record per project ID per file (updates across separate files are unaffected). Noted that some broadcasters split update streams into one update per file to simplify error handling. |
+| 5.13 | 13/7/2026 | Added "TEP Ingestion Validation" section consolidating in one place the application-level validation rules TEP applies at ingestion, previously documented only in their individual sections. |
 
 ## Introduction
 
@@ -534,6 +535,30 @@ However, if you want to remove previously stored data for an optional field, you
 ### Partial Updates
 
 If a single field has changed, the entire record should be re-posted including all other mandatory fields, even if those fields have not changed. Optional fields need not be resent if they haven't changed, although including them will not cause any issues.
+
+## TEP Ingestion Validation
+
+In addition to XSD schema validation, TEP applies a number of application-level validation rules when a file is ingested. These rules cannot be expressed in XSD 1.0, so a file may pass XSD validation and still be rejected by TEP. Each rule is described in the relevant section of this document; they are consolidated here for convenience.
+
+If any record in a file fails one of these checks, the whole file is rejected (see the S3 XML Exchange Protocol document for how errors are reported). The one exception is a Post-TX publication record with an unrecognised episode ID, which is silently ignored without affecting the rest of the file.
+
+**Both feeds:**
+
+- `/Document/@schemaVersion` must be a revision identifier recognised by TEP; files with unrecognised versions are rejected.
+- Elements that are declared optional in the XSD purely so that removal records can validate (e.g. Episode within Project, ChannelPlatforms and PublicationDateTime within Publication) are mandatory for non-removal records, and their absence will cause rejection. See the "Deleting Records" section under "Data Update Behaviour".
+
+**Pre-TX (Programmes):**
+
+- Each Genres container must include exactly one Ofcom genre, validated against Ofcom's genre list. At most one OfcomSuper genre is allowed (derived from the Ofcom genre if omitted), and at most one Commissioner genre (the value of which is not validated). See the Genre sections under "Pre-TX Data".
+- Every non-removal Project must contain at least one Episode.
+- A given project ID may appear at most once per file; multiple updates to the same project must be consolidated into a single Project record. See "One Update per Project per File" under "Data Update Behaviour".
+
+**Post-TX (Publications):**
+
+- WindowClosureDateTime is only valid when `availabilityMode="onDemand"`.
+- At most one SubChannel per ChannelPlatform may carry `isCore="true"`, and the combinations described under "Invalid Combinations" in the "Regional Variations" section are rejected.
+- The publicationId attribute, optional on normal records, must be present when `remove="true"`.
+- A publication record whose episodeId does not match an episode previously supplied in the Pre-TX feed is silently ignored rather than rejected — see Notes 2 and 3 under `/Document/Publications/Publication/@episodeId`.
 
 ## Regional Variations
 
