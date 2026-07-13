@@ -15,6 +15,7 @@
 | 5.9 | 9/7/2026 | Converted document from Word to Markdown to simplify change tracking and enable external contributions via GitHub.<br>Corrected the Deleting Records example and removal notes to reflect the minimal XSD-valid removal record (verified with xmllint against the published XSD): enumerated attributes such as availabilityMode must carry a permitted value rather than an empty string. |
 | 5.10 | 13/7/2026 | Corrected the Episode slotLength removal notes: a valid ISO 8601 duration value (e.g. PT0S) is still required when removing an Episode, as an empty value will not pass XSD validation, but in the case of deletion the value is ignored (verified with xmllint against the published XSD). |
 | 5.11 | 13/7/2026 | Added note that a file may contain multiple Publications containers, as permitted by the XSD. |
+| 5.12 | 13/7/2026 | Added note that TEP cannot process multiple updates to the same project within a single Pre-TX file: consolidate to one Project record per project ID per file (updates across separate files are unaffected). Noted that some broadcasters split update streams into one update per file to simplify error handling. |
 
 ## Introduction
 
@@ -102,7 +103,7 @@ The Supplier object identifies the organisation supplying the paperwork for the 
 
 ### Project (Series/Programme)
 
-A Project represents a series, programme, or collection of related episodes.
+A Project represents a series, programme, or collection of related episodes. A given project may appear only once per file — see "One Update per Project per File" under "Data Update Behaviour" below.
 
 #### `/Document/Programmes/Supplier/Project/@id`
 
@@ -489,6 +490,14 @@ All ID fields (Supplier.id, Project.id, Episode.id) are internal identifiers def
 ### Creating and Updating Records
 
 When an XML file is processed, the system uses the supplied IDs to determine whether to create a new record or update an existing one. If no record with the supplied ID exists, a new record will be created in TEP. If a record with the supplied ID already exists, the data in the XML will overwrite the previously stored data for that record. Records can be resent as many times as needed to update information.
+
+### One Update per Project per File
+
+TEP's ingestion process cannot process multiple updates to the same project within a single Pre-TX file. Each project ID must therefore appear at most once per file: if your systems generate several changes to the same project (or to episodes within it), consolidate them into a single Project record presenting one complete view of the project and its episodes before sending. This restriction cannot be expressed in the XSD, so a file containing more than one Project record with the same ID will pass XSD validation but will be rejected by TEP on ingestion.
+
+This limitation applies only within a single file. Updating the same project repeatedly across separate files is fully supported and is the normal way project data evolves over time.
+
+Some broadcasters have found it useful to split an update stream (for example, a queue of updates generated throughout the day) into separate XML files, each containing just one project — or even just one update action — per file. This results in more files, but the one-update-per-project-per-file limitation becomes a non-issue and error handling is much easier. Ingestion is all-or-nothing: an error anywhere in a file causes the whole file to be rejected, which otherwise requires the sender to parse the error report to work out which of potentially hundreds of updates caused the problem. With one update per file, a rejected file identifies the problem update exactly. Broadcasters are free to take whichever approach they prefer — many updates per file, or one per file — this is simply a suggestion of one potential benefit of the latter.
 
 ### Deleting Records
 
