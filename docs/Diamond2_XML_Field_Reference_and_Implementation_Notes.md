@@ -493,7 +493,7 @@ When an XML file is processed, the system uses the supplied IDs to determine whe
 
 ### One Update per Project per File
 
-TEP's ingestion process cannot process multiple updates to the same project within a single Pre-TX file. Each project ID must therefore appear at most once per file: if your systems generate several changes to the same project (or to episodes within it), consolidate them into a single Project record presenting one complete view of the project and its episodes before sending. This restriction cannot be expressed in the XSD, so a file containing more than one Project record with the same ID will pass XSD validation but will be rejected by TEP on ingestion.
+TEP's ingestion process cannot process multiple updates to the same project within a single Pre-TX file. Each project ID must therefore appear at most once per file: if your systems generate several changes to the same project (or to episodes within it) for inclusion in the same file, consolidate them into a single Project record presenting one complete view of the project and its episodes before sending. This restriction cannot be expressed in the XSD, so a file containing more than one Project record with the same ID will pass XSD validation but will be rejected by TEP on ingestion.
 
 This limitation applies only within a single file. Updating the same project repeatedly across separate files is fully supported and is the normal way project data evolves over time.
 
