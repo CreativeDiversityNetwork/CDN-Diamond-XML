@@ -80,6 +80,7 @@ Several business rules cannot be expressed in XSD 1.0 and are enforced server-si
 - **Conditional requirements for deletion** — the schema cannot express "if remove is true, other fields are optional", so some elements that are mandatory for non-removal records (such as `ChannelPlatforms` and `PublicationDateTime`) are declared optional in the XSD, and TEP enforces their presence for non-removal records at ingestion. Removal records (`remove="true"`) therefore pass XSD validation. They must still carry the object's mandatory attributes: string-typed attributes may be empty, but enumerated attributes (such as `availabilityMode`) must be given one of their permitted values. See the [Deleting Records](Diamond2_XML_Field_Reference_and_Implementation_Notes.md#deleting-records) section of the Field Reference.
 - **WindowClosureDateTime** — only valid when `availabilityMode="onDemand"`.
 - **SubChannel isCore constraint** — at most one `SubChannel` per `ChannelPlatform` may carry `isCore="true"`.
+- **One update per project per PRE-TX file** — a given project ID may appear at most once per file; consolidate multiple changes into a single Project record. Updating the same project across separate files is fully supported. A file containing duplicate project IDs will pass XSD validation but will be rejected by TEP. See [One Update per Project per File](Diamond2_XML_Field_Reference_and_Implementation_Notes.md#one-update-per-project-per-file) in the Field Reference.
 
 ## Delivery protocol
 
