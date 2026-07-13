@@ -13,6 +13,7 @@
 | 5.7 | 26/6/2026 | Modified XSD so that objects with remove=true attribute will now validate correctly, updating documentation to reflect this.<br>Added documentation of /Document/@schemaVersion |
 | 5.8 | 27/6/2026 | Added note on behaviour of Post-TX publication ingestion process when an unknown Episode ID is encountered. |
 | 5.9 | 9/7/2026 | Converted document from Word to Markdown to simplify change tracking and enable external contributions via GitHub.<br>Corrected the Deleting Records example and removal notes to reflect the minimal XSD-valid removal record (verified with xmllint against the published XSD): enumerated attributes such as availabilityMode must carry a permitted value rather than an empty string. |
+| 5.10 | 13/7/2026 | Corrected the Episode slotLength removal notes: a valid ISO 8601 duration value (e.g. PT0S) is still required when removing an Episode, as an empty value will not pass XSD validation, but in the case of deletion the value is ignored (verified with xmllint against the published XSD). |
 
 ## Introduction
 
@@ -274,7 +275,7 @@ When the first episode for a project is encountered, then if at this point the p
 
 **Example:** `PT1H` (1 hour), `PT30M` (30 minutes), `PT1H30M` (1 hour 30 minutes)
 
-**Description:** Slot length or duration in ISO 8601 format. The precise duration is not essential here; broadcast slot duration is acceptable. If the duration varies between different versions of the episode, provide a duration that is representative of most versions. When removing an Episode (i.e. `remove="true"`) the slotLength attribute remains mandatory but the contents will be ignored so a hard coded empty or arbitrary value can be used.
+**Description:** Slot length or duration in ISO 8601 format. The precise duration is not essential here; broadcast slot duration is acceptable. If the duration varies between different versions of the episode, provide a duration that is representative of most versions. When removing an Episode (i.e. `remove="true"`) the slotLength attribute remains mandatory and a valid ISO 8601 duration value is still required to pass XSD validation (it cannot be left empty, so use a hard coded value such as `PT0S`), but in the case of deletion the value will be ignored.
 
 #### `/Document/Programmes/Supplier/Project/Episode/@number`
 
@@ -488,7 +489,7 @@ When an XML file is processed, the system uses the supplied IDs to determine whe
 
 Whilst updating an existing record is achieved by resending it with the same ID and revised data, some record types support explicit deletion via the remove attribute.
 
-When `remove="true"` is set on a supported object, TEP will delete the identified record. Only the ID attribute is used to identify the object, but the XSD still requires the object's other mandatory attributes to be present, so they must be supplied with placeholder values. Their contents will be ignored by TEP. Attributes typed as plain strings may be left empty, but attributes with an enumerated type (such as `availabilityMode`) must be given one of their permitted values to pass XSD validation. Child elements should be omitted entirely.
+When `remove="true"` is set on a supported object, TEP will delete the identified record. Only the ID attribute is used to identify the object, but the XSD still requires the object's other mandatory attributes to be present, so they must be supplied with placeholder values. Their contents will be ignored by TEP. Attributes typed as plain strings may be left empty, attributes with an enumerated type (such as `availabilityMode`) must be given one of their permitted values, and attributes with other typed content (such as `slotLength`, a duration) must be given a syntactically valid value (e.g. `PT0S`) to pass XSD validation — but in the case of deletion all these values will be ignored. Child elements should be omitted entirely.
 
 The following is the minimal removal record for a previously submitted Publication, verified against the published XSD:
 
