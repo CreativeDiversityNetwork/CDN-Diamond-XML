@@ -15,8 +15,8 @@
       This is the standalone POST-TX schema. The Document root element accepts only
       Publications data. For PRE-TX (Programmes), see Diamond2_PreTX_v1.xsd.
 
-      Date: 12.04.26
-      Version: 5.2
+      Date: 13.07.26
+      Version: 5.9
 
       XSD Version: 1.0
       Note: Some business rule constraints (e.g., conditional requirements when
@@ -168,8 +168,11 @@
       <xs:annotation>
         <xs:documentation>
           Set to "true" to delete a previously submitted publication record.
-          When removing, only the publicationId attribute is required — all other
-          attributes and child elements should be omitted.
+          When removing, publicationId identifies the record to delete and must be
+          supplied. The episodeId and availabilityMode attributes remain required
+          by the schema but their values are ignored: episodeId may be an empty
+          string; availabilityMode must be one of its permitted values.
+          Child elements should be omitted.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

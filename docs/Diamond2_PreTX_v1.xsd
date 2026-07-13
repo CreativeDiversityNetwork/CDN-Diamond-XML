@@ -15,8 +15,8 @@
       This is the standalone PRE-TX schema. The Document root element accepts only
       Programmes data. For POST-TX (Publications), see Diamond2_PostTX_v1.xsd.
 
-      Date: 12.04.26
-      Version: 5.2
+      Date: 13.07.26
+      Version: 5.9
 
       XSD Version: 1.0
       Note: Some business rule constraints (e.g., genre count restrictions, conditional
@@ -214,8 +214,11 @@
       <xs:annotation>
         <xs:documentation>
           Set to "true" to delete a previously submitted project record.
-          When removing, only the id attribute is required — all other attributes
-          and child elements should be omitted.
+          When removing, the id attribute identifies the project to delete and
+          must be supplied. The name and medium attributes remain required by
+          the schema but their values are ignored: name may be an empty string;
+          medium must be one of its permitted values.
+          Child elements should be omitted.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -290,8 +293,11 @@
       <xs:annotation>
         <xs:documentation>
           Set to "true" to delete a previously submitted episode record.
-          When removing, only the id attribute is required — all other attributes
-          and child elements should be omitted.
+          When removing, the id attribute identifies the episode to delete and
+          must be supplied. The name and slotLength attributes remain required
+          by the schema but their values are ignored: name may be an empty
+          string; slotLength must be a valid ISO 8601 duration (e.g. "PT0S").
+          Child elements should be omitted.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
