@@ -14,6 +14,7 @@
 | 5.8 | 27/6/2026 | Added note on behaviour of Post-TX publication ingestion process when an unknown Episode ID is encountered. |
 | 5.9 | 9/7/2026 | Converted document from Word to Markdown to simplify change tracking and enable external contributions via GitHub.<br>Corrected the Deleting Records example and removal notes to reflect the minimal XSD-valid removal record (verified with xmllint against the published XSD): enumerated attributes such as availabilityMode must carry a permitted value rather than an empty string. |
 | 5.10 | 13/7/2026 | Corrected the Episode slotLength removal notes: a valid ISO 8601 duration value (e.g. PT0S) is still required when removing an Episode, as an empty value will not pass XSD validation, but in the case of deletion the value is ignored (verified with xmllint against the published XSD). |
+| 5.11 | 13/7/2026 | Added note that a file may contain multiple Publications containers, as permitted by the XSD. |
 
 ## Introduction
 
@@ -330,6 +331,10 @@ When the first episode for a project is encountered, then if at this point the p
 ## Post-TX Data: Publication & Transmission
 
 This section covers fields used to describe transmission events and on-demand availability windows after content has been published.
+
+### Publications Container
+
+As per the XSD, a single file may contain multiple `<Publications>` containers under `<Document>`, each holding one or more `<Publication>` objects. There is no particular benefit to doing this: Publication objects do not inherit anything from their parent Publications container, so the effect is the same either way. It is up to the sender whether to place many Publication objects in one Publications envelope, or to send many Publications containers each with just one Publication.
 
 ### Publication
 
