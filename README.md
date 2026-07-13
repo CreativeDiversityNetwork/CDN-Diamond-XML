@@ -13,6 +13,8 @@ Full documentation, schemas, and examples are available at:\
 
 Or browse the [`docs/`](docs/) directory directly.
 
+The [Field Reference and Implementation Notes](docs/Diamond2_XML_Field_Reference_and_Implementation_Notes.md) is the canonical field-by-field reference for the schemas. It is maintained in Markdown so that its change history is tracked in git, and corrections are welcome via pull request.
+
 ## License
 
 This project is licensed under the [Apache License 2.0](LICENSE).

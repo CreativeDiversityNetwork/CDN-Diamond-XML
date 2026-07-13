@@ -6,6 +6,8 @@ Diamond 2 is the next generation of CDN's diversity monitoring system for the UK
 
 This repository is published for Diamond 2 participants and for anyone in the wider broadcasting industry who may find the schema useful as a reference or starting point.
 
+**[Source and issue tracker on GitHub](https://github.com/CreativeDiversityNetwork/CDN-Diamond-XML)** — corrections and suggestions are welcome via issues and pull requests.
+
 ## Overview
 
 The exchange uses two types of XML document:
@@ -23,7 +25,7 @@ Each document type has its own standalone XSD schema. PRE-TX and POST-TX data ar
 | [Diamond2_PostTX_v1.xsd](Diamond2_PostTX_v1.xsd) | XSD schema for POST-TX (Publications) documents |
 | [Diamond2_PreTX_Example.xml](Diamond2_PreTX_Example.xml) | Example PRE-TX document |
 | [Diamond2_PostTX_Example.xml](Diamond2_PostTX_Example.xml) | Example POST-TX document |
-| [Diamond2_XML_Field_Reference_and_Implementation_Notes.docx](Diamond2_XML_Field_Reference_and_Implementation_Notes.docx) | Field-by-field reference and implementation guidance |
+| [Diamond2_XML_Field_Reference_and_Implementation_Notes.md](Diamond2_XML_Field_Reference_and_Implementation_Notes.md) | Field-by-field reference and implementation guidance (canonical version, maintained in Markdown) |
 | [Diamond2_S3_XML_Exchange_Protocol.docx](Diamond2_S3_XML_Exchange_Protocol.docx) | S3-based file exchange protocol specification |
 | [Diamond2_S3_Authentication.docx](Diamond2_S3_Authentication.docx) | AWS authentication setup guide for S3 upload access |
 
@@ -75,7 +77,7 @@ xmllint --schema docs/Diamond2_PostTX_v1.xsd --noout docs/Diamond2_PostTX_Exampl
 Several business rules cannot be expressed in XSD 1.0 and are enforced server-side by TEP during ingestion:
 
 - **Genre count constraints** — exactly one Ofcom genre required; at most one OfcomSuper; at most one Commissioner.
-- **Conditional requirements for deletion** — when `remove="true"` is set on a Project, Episode, or Publication, only the identifying ID attribute is required. The schema cannot express "if remove is true, other fields are optional." Files containing removal records will not pass schema validation; this is expected.
+- **Conditional requirements for deletion** — the schema cannot express "if remove is true, other fields are optional", so some elements that are mandatory for non-removal records (such as `ChannelPlatforms` and `PublicationDateTime`) are declared optional in the XSD, and TEP enforces their presence for non-removal records at ingestion. Removal records (`remove="true"`) therefore pass XSD validation. They must still carry the object's mandatory attributes: string-typed attributes may be empty, but enumerated attributes (such as `availabilityMode`) must be given one of their permitted values. See the [Deleting Records](Diamond2_XML_Field_Reference_and_Implementation_Notes.md#deleting-records) section of the Field Reference.
 - **WindowClosureDateTime** — only valid when `availabilityMode="onDemand"`.
 - **SubChannel isCore constraint** — at most one `SubChannel` per `ChannelPlatform` may carry `isCore="true"`.
 
