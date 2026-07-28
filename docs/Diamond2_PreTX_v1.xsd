@@ -15,8 +15,8 @@
       This is the standalone PRE-TX schema. The Document root element accepts only
       Programmes data. For POST-TX (Publications), see Diamond2_PostTX_v1.xsd.
 
-      Date: 13.07.26
-      Version: 5.9
+      Date: 28.07.26
+      Version: 5.14
 
       XSD Version: 1.0
       Note: Some business rule constraints (e.g., genre count restrictions, conditional
@@ -269,12 +269,20 @@
           Slot length/duration in ISO 8601 format (e.g., "PT1H" for 1 hour).
           Broadcast slot duration is acceptable; precise duration is not essential.
           If duration varies per version, provide a representative duration for most versions.
+          A zero duration (e.g., "PT0M") may be sent where the slot length is not yet
+          known; resend the episode record with the correct value once confirmed.
+          TEP stores slotLength to a resolution of one minute: any seconds supplied
+          are truncated (rounded down), so "PT30M45S" is stored as "PT30M".
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="number" type="xs:string" use="optional">
+    <xs:attribute name="number" type="xs:string" use="required">
       <xs:annotation>
-        <xs:documentation>Optional episode number.</xs:documentation>
+        <xs:documentation>
+          Episode number: the episode's position within the series.
+          Note this is not the broadcaster's internal episode identifier (that is
+          the id attribute).
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="makerId" type="xs:string" use="optional">
@@ -285,6 +293,8 @@
           This field is FOR REPORTING PURPOSES ONLY and does not grant the referenced production
           company any access to administer the project in TEP.
           If omitted, defaults to the parent Supplier.id.
+          NOTE: This attribute is proposed for removal in a future revision unless
+          broadcasters indicate they rely on it.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -294,9 +304,10 @@
         <xs:documentation>
           Set to "true" to delete a previously submitted episode record.
           When removing, the id attribute identifies the episode to delete and
-          must be supplied. The name and slotLength attributes remain required
-          by the schema but their values are ignored: name may be an empty
-          string; slotLength must be a valid ISO 8601 duration (e.g. "PT0S").
+          must be supplied. The name, slotLength and number attributes remain
+          required by the schema but their values are ignored: name and number
+          may be empty strings; slotLength must be a valid ISO 8601 duration
+          (e.g. "PT0S").
           Child elements should be omitted.
         </xs:documentation>
       </xs:annotation>

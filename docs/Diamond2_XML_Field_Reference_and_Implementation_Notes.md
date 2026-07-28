@@ -17,6 +17,7 @@
 | 5.11 | 13/7/2026 | Added note that a file may contain multiple Publications containers, as permitted by the XSD. |
 | 5.12 | 13/7/2026 | Added note that TEP cannot process multiple updates to the same project within a single Pre-TX file: consolidate to one Project record per project ID per file (updates across separate files are unaffected). Noted that some broadcasters split update streams into one update per file to simplify error handling. |
 | 5.13 | 13/7/2026 | Added "TEP Ingestion Validation" section consolidating in one place the application-level validation rules TEP applies at ingestion, previously documented only in their individual sections. |
+| 5.14 | 28/7/2026 | Episode number attribute is now mandatory (Pre-TX XSD updated accordingly).<br>Episode slotLength may now be a zero duration (PT0M) where the slot length is not yet known.<br>Noted that slotLength is stored to a resolution of one minute, with any seconds truncated.<br>Noted that the makerId attribute is proposed for removal.<br>Updated the Ofcom genre code list to include sub-genre codes and documented how sub-genres are encoded. |
 
 ## Introduction
 
@@ -226,9 +227,13 @@ When the first episode for a project is encountered, then if at this point the p
 
 **Genre Constraints:**
 
-- **Ofcom genre:** Mandatory - exactly one required. Ofcom genres must be provided using the short code (e.g. "CHDRA") rather than the long description (e.g. "Children's drama"). The Ofcom genre value will be validated against Ofcom's official genre code list. At the time of the last update of this document the list of Ofcom genre codes was as follows:
+- **Ofcom genre:** Mandatory - exactly one required. Ofcom genres must be provided using the short code (e.g. "CHDRA") rather than the long description (e.g. "Children's drama"). The Ofcom genre value will be validated against Ofcom's official genre code list.
 
-  `ANIMATION, ARTINF, ARTPERF, CAFF, CHDRA, CHENT, CHILDANIM, CHINF, CHNEWS, CLASSMUS, CLOSE, COMOTH, CONTMUS, DOC, DRDOC, DROTH, EDOTH, ENOTH, FACTENT, FILM, GENFAC, GSOTHER, GSPRIZ, HISTORY, HOBLEISURE, HOMESHOP, LONG, NATENV, NEWS, NEWS24, NEWSNT, PARLCAFF, PARLNEWS, PPB, PRESCL, RELFAITH, RELSEV, SCHOOLS, SCIMEDTEC, SITCOM, SOCACT, SPECEVT, SPEVT, SPOTH, TALKMAG, WEATHER`
+  **Sub-genres:** Ofcom sub-genres are handled by extending the parent Ofcom genre code rather than by a separate attribute or element. Where a sub-genre applies, append an underscore and the sub-genre suffix to the parent code (e.g. `DROTH_CRIMLEG` or `FILM_MUSICAL`). Where sub-genres exist for a genre but you do not hold that level of detail in your system, simply send the parent code on its own, without the underscore or any suffix; nothing further is required.
+
+  At the time of the last update of this document the list of Ofcom genre codes (including sub-genre codes) was as follows:
+
+  `ANIMATION, ANIMATION_COM, ANIMATION_OTH, ARTINF, ARTPERF, CAFF, CHDRA, CHENT, CHILDANIM, CHINF, CHNEWS, CLASSMUS, CLOSE, COMOTH, CONTMUS, DOC, DRDOC, DROTH, DROTH_ACTTHRILL, DROTH_COM, DROTH_CRIMLEG, DROTH_FAM, DROTH_GENCHAR, DROTH_HORR, DROTH_OTH, DROTH_ROM, DROTH_SCIFAN, EDOTH, ENOTH, FACTENT, FILM, FILM_ACTTHRILL, FILM_ANIM, FILM_CHFAM, FILM_COM, FILM_CRIMLEG, FILM_GENCHAR, FILM_HORR, FILM_MUSICAL, FILM_OTH, FILM_ROM, FILM_SCIFAN, GENFAC, GSOTHER, GSPRIZ, HISTORY, HOBLEISURE, HOMESHOP, LONG, NATENV, NEWS, NEWS24, NEWSNT, PARLCAFF, PARLNEWS, PPB, PRESCL, RELFAITH, RELSEV, SCHOOLS, SCIMEDTEC, SITCOM, SOCACT, SPECEVT, SPEVT, SPOTH, TALKMAG, WEATHER`
 
 - **OfcomSuper genre:** Optional - maximum one allowed. If omitted, will be automatically derived from the Ofcom genre (every Ofcom genre is a child of a pre-defined supergenre parent). Once again this should be provided in the short code form. At the time of the last update of this document the list of Ofcom genre codes was as follows:
 
@@ -280,13 +285,17 @@ When the first episode for a project is encountered, then if at this point the p
 
 **Description:** Slot length or duration in ISO 8601 format. The precise duration is not essential here; broadcast slot duration is acceptable. If the duration varies between different versions of the episode, provide a duration that is representative of most versions. When removing an Episode (i.e. `remove="true"`) the slotLength attribute remains mandatory and a valid ISO 8601 duration value is still required to pass XSD validation (it cannot be left empty, so use a hard coded value such as `PT0S`), but in the case of deletion the value will be ignored.
 
+A zero duration (e.g. `PT0M`) may be supplied where the slot length is not yet known at the point the episode record is first created. Rather than holding the record back until the slot is confirmed, send it with a zero duration and update it later by resending the episode record with the correct value.
+
+Note that TEP stores slotLength to a resolution of one minute. Any seconds supplied will be truncated — that is, rounded down to the nearest minute — so a value of `PT30M45S` will be stored as `PT30M`. There is no need to change what your system sends if it holds durations to the second, but be aware that the value stored in TEP will not be an exact match for your own.
+
 #### `/Document/Programmes/Supplier/Project/Episode/@number`
 
-**Status:** Optional
+**Status:** Mandatory
 
 **Type:** String
 
-**Description:** Optional episode number within the series. Note that this is not the broadcaster's internal episode identifier (that's Episode.id), but rather the episode's position in the series.
+**Description:** Episode number within the series, which must be supplied for every episode. Note that this is not the broadcaster's internal episode identifier (that's Episode.id), but rather the episode's position in the series. The episode number is used in several parts of the TEP user interface and no sensible default can be generated where it is absent, so it must be supplied at source. When removing an Episode (i.e. `remove="true"`) the number attribute remains mandatory but the contents will be ignored so a hard coded empty or arbitrary value can be used.
 
 #### `/Document/Programmes/Supplier/Project/Episode/@makerId`
 
@@ -295,6 +304,8 @@ When the first episode for a project is encountered, then if at this point the p
 **Type:** String
 
 **Description:** Optional supplier ID of the production company creating the content. Used when paperwork completion is outsourced to a different company than the content maker. The parent Supplier object identifies who is completing the paperwork (and who gets access to administer the project in TEP), whilst this field identifies who is actually making the content. This field is for reporting purposes only and does not grant the referenced production company any access to administer the project in TEP. If omitted, defaults to the parent Supplier.id.
+
+**Note:** This attribute is proposed for removal in a future revision, as we are not aware of any organisation populating it. If your organisation needs this field, please get in touch; otherwise it will be removed.
 
 #### `/Document/Programmes/Supplier/Project/Episode/Tags`
 
