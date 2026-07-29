@@ -26,8 +26,8 @@ Each document type has its own standalone XSD schema. PRE-TX and POST-TX data ar
 | [Diamond2_PreTX_Example.xml](Diamond2_PreTX_Example.xml) | Example PRE-TX document |
 | [Diamond2_PostTX_Example.xml](Diamond2_PostTX_Example.xml) | Example POST-TX document |
 | [Diamond2_XML_Field_Reference_and_Implementation_Notes.md](Diamond2_XML_Field_Reference_and_Implementation_Notes.md) | Field-by-field reference and implementation guidance (canonical version, maintained in Markdown) |
-| [Diamond2_S3_XML_Exchange_Protocol.docx](Diamond2_S3_XML_Exchange_Protocol.docx) | S3-based file exchange protocol specification |
-| [Diamond2_S3_Authentication.docx](Diamond2_S3_Authentication.docx) | AWS authentication setup guide for S3 upload access |
+| [Diamond2_S3_XML_Exchange_Protocol.md](Diamond2_S3_XML_Exchange_Protocol.md) | S3-based file exchange protocol specification |
+| [Diamond2_S3_Authentication.md](Diamond2_S3_Authentication.md) | AWS authentication setup guide for S3 upload access |
 
 ## Schema structure
 
@@ -77,7 +77,8 @@ xmllint --schema docs/Diamond2_PostTX_v1.xsd --noout docs/Diamond2_PostTX_Exampl
 Several business rules cannot be expressed in XSD 1.0 and are enforced server-side by TEP during ingestion — see the [TEP Ingestion Validation](Diamond2_XML_Field_Reference_and_Implementation_Notes.md#tep-ingestion-validation) section of the Field Reference for the consolidated list. In summary:
 
 - **Genre count constraints** — exactly one Ofcom genre required; at most one OfcomSuper; at most one Commissioner.
-- **Conditional requirements for deletion** — the schema cannot express "if remove is true, other fields are optional", so some elements that are mandatory for non-removal records (such as `ChannelPlatforms` and `PublicationDateTime`) are declared optional in the XSD, and TEP enforces their presence for non-removal records at ingestion. Removal records (`remove="true"`) therefore pass XSD validation. They must still carry the object's mandatory attributes: string-typed attributes may be empty, but enumerated attributes (such as `availabilityMode`) must be given one of their permitted values. See the [Deleting Records](Diamond2_XML_Field_Reference_and_Implementation_Notes.md#deleting-records) section of the Field Reference.
+- **Genre/supergenre consistency** — where both an Ofcom and an OfcomSuper genre are supplied, the supergenre must be the correct parent of the genre.
+- **Conditional requirements for deletion** — the schema cannot express "if remove is true, other fields are optional", so some elements that are mandatory for non-removal records (such as `ChannelPlatforms` and `PublicationDateTime`) are declared optional in the XSD, and TEP enforces their presence for non-removal records at ingestion. Removal records (`remove="true"`) therefore pass XSD validation. They must still carry the object's mandatory attributes: string-typed attributes may be empty, but enumerated attributes (such as `availabilityMode`) must be given one of their permitted values, and other typed attributes (such as `slotLength`, a duration, or the Episode `number`, a positive integer) need a syntactically valid value. See the [Deleting Records](Diamond2_XML_Field_Reference_and_Implementation_Notes.md#deleting-records) section of the Field Reference.
 - **WindowClosureDateTime** — only valid when `availabilityMode="onDemand"`.
 - **SubChannel isCore constraint** — at most one `SubChannel` per `ChannelPlatform` may carry `isCore="true"`.
 - **One update per project per PRE-TX file** — a given project ID may appear at most once per file; consolidate multiple changes into a single Project record. Updating the same project across separate files is fully supported. A file containing duplicate project IDs will pass XSD validation but will be rejected by TEP. See [One Update per Project per File](Diamond2_XML_Field_Reference_and_Implementation_Notes.md#one-update-per-project-per-file) in the Field Reference.
@@ -95,9 +96,9 @@ XML files are exchanged via Amazon S3. Each broadcaster has a dedicated S3 bucke
   └── staging/         # same layout, for testing
 ```
 
-Files in `incoming/` are processed in lexical filename order. The entire file is accepted or rejected as a unit — there is no partial ingestion. Status files and error reports are retained for 7 days.
+Files in `incoming/` are processed in lexical order of filename, so choose a naming convention that sorts in the order you intend files to be ingested (lead with a sortable date or timestamp, and make sure Pre-TX files sort before any Post-TX files that depend on them). The entire file is accepted or rejected as a unit — there is no partial ingestion. Status files and error reports are retained for 7 days.
 
-See [Diamond2_S3_XML_Exchange_Protocol.docx](Diamond2_S3_XML_Exchange_Protocol.docx) and [Diamond2_S3_Authentication.docx](Diamond2_S3_Authentication.docx) for full details on the delivery mechanism and AWS authentication setup.
+See [Diamond2_S3_XML_Exchange_Protocol.md](Diamond2_S3_XML_Exchange_Protocol.md) and [Diamond2_S3_Authentication.md](Diamond2_S3_Authentication.md) for full details on the delivery mechanism, file naming guidance, and AWS authentication setup.
 
 ## Data update behaviour
 

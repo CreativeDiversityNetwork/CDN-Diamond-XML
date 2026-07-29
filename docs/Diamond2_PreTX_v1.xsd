@@ -15,7 +15,7 @@
       This is the standalone PRE-TX schema. The Document root element accepts only
       Programmes data. For POST-TX (Publications), see Diamond2_PostTX_v1.xsd.
 
-      Date: 28.07.26
+      Date: 29.07.26
       Version: 5.14
 
       XSD Version: 1.0
@@ -269,17 +269,21 @@
           Slot length/duration in ISO 8601 format (e.g., "PT1H" for 1 hour).
           Broadcast slot duration is acceptable; precise duration is not essential.
           If duration varies per version, provide a representative duration for most versions.
-          A zero duration (e.g., "PT0M") may be sent where the slot length is not yet
+          A zero duration (e.g., "PT0S") may be sent where the slot length is not yet
           known; resend the episode record with the correct value once confirmed.
-          TEP stores slotLength to a resolution of one minute: any seconds supplied
-          are truncated (rounded down), so "PT30M45S" is stored as "PT30M".
+          slotLength is stored to a resolution of one second.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="number" type="xs:string" use="required">
+    <xs:attribute name="number" type="xs:positiveInteger" use="required">
       <xs:annotation>
         <xs:documentation>
-          Episode number: the episode's position within the series.
+          Episode number: the episode's ordinal position within the series, starting at 1.
+          Must be a positive whole number: zero, negative values, decimals and
+          non-numeric values all fail XSD validation. A leading zero validates but
+          is not preserved ("007" is stored as 7). In a two-parter or similar
+          grouping, each part takes its own position in the sequence rather than
+          being sub-numbered.
           Note this is not the broadcaster's internal episode identifier (that is
           the id attribute).
         </xs:documentation>
@@ -305,9 +309,9 @@
           Set to "true" to delete a previously submitted episode record.
           When removing, the id attribute identifies the episode to delete and
           must be supplied. The name, slotLength and number attributes remain
-          required by the schema but their values are ignored: name and number
-          may be empty strings; slotLength must be a valid ISO 8601 duration
-          (e.g. "PT0S").
+          required by the schema but their values are ignored: name may be an
+          empty string; slotLength must be a valid ISO 8601 duration (e.g.
+          "PT0S"); number must be a valid positive whole number (e.g. "1").
           Child elements should be omitted.
         </xs:documentation>
       </xs:annotation>
@@ -347,6 +351,9 @@
                     - Ofcom: Mandatory, exactly one required. Validated against Ofcom's genre list.
                     - OfcomSuper: Optional, maximum one allowed. Derived from Ofcom genre if omitted
                       (every Ofcom genre is a child of a pre-defined supergenre parent).
+                      Where both Ofcom and OfcomSuper genres are supplied, the OfcomSuper genre
+                      must be the correct parent of the Ofcom genre; an inconsistent pairing is
+                      rejected on ingestion, along with the entire file containing it.
                     - Commissioner: Optional, maximum one allowed. Broadcaster-specific genre with no validation.
 
                     Note: These count constraints cannot be enforced by XSD 1.0. An XSD 1.1 version with
