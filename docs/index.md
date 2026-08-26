@@ -85,15 +85,13 @@ Several business rules cannot be expressed in XSD 1.0 and are enforced server-si
 
 ## Delivery protocol
 
-XML files are exchanged via Amazon S3. Each broadcaster has a dedicated S3 bucket with the following directory structure:
+XML files are exchanged via Amazon S3. Each broadcaster has two dedicated S3 buckets — one live, one staging (for testing) — each with the following directory structure:
 
 ```
-<sender-root>/
-  ├── live/
-  │   ├── incoming/    # broadcaster uploads XML files here
-  │   ├── complete/    # status files for successfully ingested XML
-  │   └── errors/      # rejected files with error reports
-  └── staging/         # same layout, for testing
+<bucket>/
+  ├── incoming/    # broadcaster uploads XML files here
+  ├── complete/    # status files for successfully ingested XML
+  └── errors/      # rejected files with error reports
 ```
 
 Files in `incoming/` are processed in lexical order of filename, so choose a naming convention that sorts in the order you intend files to be ingested (lead with a sortable date or timestamp, and make sure Pre-TX files sort before any Post-TX files that depend on them). The entire file is accepted or rejected as a unit — there is no partial ingestion. Status files and error reports are retained for 7 days.

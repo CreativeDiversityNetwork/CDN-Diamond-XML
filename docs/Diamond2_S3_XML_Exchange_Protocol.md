@@ -6,6 +6,7 @@
 | --- | --- | --- |
 | 1.1 | 27/11/2025 | Final Word (.docx) revision. |
 | 1.2 | 29/7/2026 | Converted from Word to Markdown to simplify change tracking and enable external contributions via GitHub.<br>Corrected the XML envelope example to match the published schemas (`Document` root element, `urn:cdn:pdx:v1` namespace).<br>Fixed section numbering and cross-references.<br>Expanded the filename rules with guidance on naming patterns and processing order. |
+| 1.3 | 29/7/2026 | Corrected the bucket layout: live and staging are separate dedicated buckets (not subdirectories of a shared sender root), each with incoming/, complete/ and errors/ at the top level. |
 
 ## 1. Purpose
 
@@ -34,25 +35,22 @@ The following limits are envisaged more as per-broadcaster default rate limits:
 | **Sender** | • Generate XML files containing new/changed episodes.<br>• Ensure filenames are unique for this broadcaster **and** lexically incremental (see §5.2).<br>• Never alter or delete objects after upload. |
 | **Receiver** | • Own and administer the S3 bucket (encryption, IAM, lifecycle).<br>• Poll for new files every 15 minutes (or use S3 events).<br>• Validate each file and ingest it, then either emit a status file into `complete/`, **or** move the XML plus an error report into `errors/`. |
 
-## 5. Bucket Layout (per Sender root)
+## 5. Bucket Layout
+
+Each broadcaster has two dedicated S3 buckets: one for live data exchange and one for staging/testing. The bucket names are provided during onboarding (see the [S3 Authentication guide](Diamond2_S3_Authentication.md)). Both buckets have the same layout, with the three exchange directories at the top level:
 
 ```
-<sender-root>/
+<bucket>/
 │
-├── live/                      # live data exchange subdirectory
-│   │
-│   ├── incoming/              # freshly uploaded objects
-│   │   └── .../file_000126.xml
-│   │
-│   ├── complete/              # successfully ingested
-│   │   └── file_000124.status.xml
-│   │
-│   └── errors/                # rejected files + diagnostics
-│       ├── file_000123.xml
-│       └── file_000123.errors.xml
+├── incoming/              # freshly uploaded objects
+│   └── file_000126.xml
 │
-└── staging/                   # staging is laid out the same as above
-    └── ...
+├── complete/              # successfully ingested
+│   └── file_000124.status.xml
+│
+└── errors/                # rejected files + diagnostics
+    ├── file_000123.xml
+    └── file_000123.errors.xml
 ```
 
 ### 5.1. Retention
@@ -65,7 +63,7 @@ The following limits are envisaged more as per-broadcaster default rate limits:
 
 The Sender may choose any naming scheme (e.g. zero-padded integer, timestamp) **as long as**:
 
-1. The name is unique within its root.
+1. The name is unique within the bucket.
 2. Later files sort *after* earlier ones using plain lexical ordering.
 
 #### Processing order and naming patterns
