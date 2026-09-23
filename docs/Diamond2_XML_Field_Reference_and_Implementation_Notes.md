@@ -18,6 +18,7 @@
 | 5.12 | 13/7/2026 | Added note that TEP cannot process multiple updates to the same project within a single Pre-TX file: consolidate to one Project record per project ID per file (updates across separate files are unaffected). Noted that some broadcasters split update streams into one update per file to simplify error handling. |
 | 5.13 | 13/7/2026 | Added "TEP Ingestion Validation" section consolidating in one place the application-level validation rules TEP applies at ingestion, previously documented only in their individual sections. |
 | 5.14 | 29/7/2026 | Episode number attribute is now mandatory and must be a positive whole number, enforced by the Pre-TX XSD.<br>Episode slotLength may now be a zero duration (PT0S) where the slot length is not yet known.<br>Documented that slotLength is stored to a resolution of one second.<br>Noted that the makerId attribute is proposed for removal.<br>Updated the Ofcom genre code list to include sub-genre codes and documented how sub-genres are encoded.<br>Documented that where both an Ofcom and an OfcomSuper genre are supplied, the supergenre must be the correct parent of the genre.<br>Converted the S3 XML Exchange Protocol and S3 Authentication documents from Word to Markdown, and added file naming / processing order guidance to the Exchange Protocol document. |
+| 5.15 | 23/9/2026 | Episode number attribute may now be zero, as some rights systems count episodes from 0: the Pre-TX XSD type has changed from positive integer to non-negative integer.<br>Added a note that TEP does not reject duplicate episode numbers within a project, but that duplicates lead to a poor user experience when mapping contributors to episodes. |
 
 ## Introduction
 
@@ -295,13 +296,17 @@ Note that slotLength is stored to a resolution of one second.
 
 **Status:** Mandatory
 
-**Type:** Positive Integer
+**Type:** Non-negative Integer
 
-**Description:** Episode number within the series, which must be supplied for every episode. This is an ordinal index — the episode's position within the series, starting at 1 — and not the broadcaster's internal episode identifier (that's Episode.id). Where a series contains a two-parter or a similar grouping, each part should take its own position in the sequence rather than being sub-numbered.
+**Description:** Episode number within the series, which must be supplied for every episode. This is an ordinal index — the episode's position within the series — and not the broadcaster's internal episode identifier (that's Episode.id). Where a series contains a two-parter or a similar grouping, each part should take its own position in the sequence rather than being sub-numbered.
 
-The value must be a positive whole number. This is enforced by the XSD, so zero, negative values, decimals and anything non-numeric will all cause the file to fail validation. Note that the value is validated as a number rather than as text, so a leading zero will validate but will not be preserved: a value of `007` is accepted and stored as `7`. If your own reporting relies on zero-padded episode numbers, the padding will not survive the journey.
+The value must be a whole number of zero or greater. This is enforced by the XSD, so negative values, decimals and anything non-numeric will all cause the file to fail validation. Note that the value is validated as a number rather than as text, so a leading zero will validate but will not be preserved: a value of `007` is accepted and stored as `7`. If your own reporting relies on zero-padded episode numbers, the padding will not survive the journey.
 
-The episode number is used in several parts of the TEP user interface and no sensible default can be generated where it is absent, so it must be supplied at source. When removing an Episode (i.e. `remove="true"`) the number attribute remains mandatory and must be a valid positive whole number to pass XSD validation (it cannot be left empty, so use a hard coded value such as `1`), but in the case of deletion the value will be ignored.
+The episode number is used in several parts of the TEP user interface and no sensible default can be generated where it is absent, so it must be supplied at source. When removing an Episode (i.e. `remove="true"`) the number attribute remains mandatory and must be a valid whole number to pass XSD validation (it cannot be left empty, so use a hard coded value such as `1`), but in the case of deletion the value will be ignored.
+
+**Starting at zero.** Some rights systems start counting episodes from 0 and others from 1. Both are accepted: the XSD permits zero (from schema revision 5.15), so a series may be numbered `0, 1, 2 …` or `1, 2, 3 …` according to whatever convention the source system uses.
+
+**Duplicate episode numbers.** TEP does not check that episode numbers are unique within a project, so a file in which two or more episodes of the same project carry the same number will be ingested without error. This will, however, cause problems for the production company: the TEP interface for assigning contributors to episodes identifies episodes by number, so duplicates cannot be told apart and the episode list will show the repeated number several times over (e.g. `0, 0, 0, 0`). If this happens, the production company will need to ask the broadcaster to correct the episode numbers at source, after which the correction will flow through to TEP when the next Pre-TX XML update is sent over to TEP. Broadcasters should therefore ensure that each episode within a project has a distinct number before it is sent, and in particular that any placeholder value used while a title is being set up is replaced with the real number before the record is assigned to a production company for them to start populating cast and crew.
 
 #### `/Document/Programmes/Supplier/Project/Episode/@makerId`
 
@@ -521,7 +526,7 @@ Some broadcasters have found it useful to split an update stream (for example, a
 
 Whilst updating an existing record is achieved by resending it with the same ID and revised data, some record types support explicit deletion via the remove attribute.
 
-When `remove="true"` is set on a supported object, TEP will delete the identified record. Only the ID attribute is used to identify the object, but the XSD still requires the object's other mandatory attributes to be present, so they must be supplied with placeholder values. Their contents will be ignored by TEP. Attributes typed as plain strings may be left empty, attributes with an enumerated type (such as `availabilityMode`) must be given one of their permitted values, and attributes with other typed content (such as `slotLength`, a duration, or the Episode `number`, a positive integer) must be given a syntactically valid value (e.g. `PT0S`, `1`) to pass XSD validation — but in the case of deletion all these values will be ignored. Child elements should be omitted entirely.
+When `remove="true"` is set on a supported object, TEP will delete the identified record. Only the ID attribute is used to identify the object, but the XSD still requires the object's other mandatory attributes to be present, so they must be supplied with placeholder values. Their contents will be ignored by TEP. Attributes typed as plain strings may be left empty, attributes with an enumerated type (such as `availabilityMode`) must be given one of their permitted values, and attributes with other typed content (such as `slotLength`, a duration, or the Episode `number`, a non-negative integer) must be given a syntactically valid value (e.g. `PT0S`, `1`) to pass XSD validation — but in the case of deletion all these values will be ignored. Child elements should be omitted entirely.
 
 The following is the minimal removal record for a previously submitted Publication, verified against the published XSD:
 
@@ -569,6 +574,7 @@ If any record in a file fails one of these checks, the whole file is rejected (s
 - Each Genres container must include exactly one Ofcom genre, validated against Ofcom's genre list. At most one OfcomSuper genre is allowed (derived from the Ofcom genre if omitted), and at most one Commissioner genre (the value of which is not validated). See the Genre sections under "Pre-TX Data".
 - Where both an Ofcom genre and an OfcomSuper genre are supplied, the supergenre must be the correct parent of the genre; an inconsistent pairing (e.g. DRAMA with SITCOM) causes the record — and the file containing it — to be rejected. See "Genre and supergenre consistency" under "Pre-TX Data".
 - Every non-removal Project must contain at least one Episode.
+- Episode numbers are **not** checked for uniqueness within a project: duplicate numbers are accepted but lead to a poor user experience when mapping contributors to episodes. See `/Document/Programmes/Supplier/Project/Episode/@number`.
 - A given project ID may appear at most once per file; multiple updates to the same project must be consolidated into a single Project record. See "One Update per Project per File" under "Data Update Behaviour".
 
 **Post-TX (Publications):**
@@ -682,6 +688,6 @@ It is anticipated that for some fields, the data might be refined over time. Thi
 
 **Schema Version:** 1.0
 
-**Date:** July 2026
+**Date:** September 2026
 
 XSD schema files and example XML documents are available from: https://schemas.creativediversitynetwork.com/

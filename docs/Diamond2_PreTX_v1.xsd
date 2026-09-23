@@ -15,8 +15,8 @@
       This is the standalone PRE-TX schema. The Document root element accepts only
       Programmes data. For POST-TX (Publications), see Diamond2_PostTX_v1.xsd.
 
-      Date: 29.07.26
-      Version: 5.14
+      Date: 23.09.26
+      Version: 5.15
 
       XSD Version: 1.0
       Note: Some business rule constraints (e.g., genre count restrictions, conditional
@@ -275,15 +275,20 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="number" type="xs:positiveInteger" use="required">
+    <xs:attribute name="number" type="xs:nonNegativeInteger" use="required">
       <xs:annotation>
         <xs:documentation>
-          Episode number: the episode's ordinal position within the series, starting at 1.
-          Must be a positive whole number: zero, negative values, decimals and
-          non-numeric values all fail XSD validation. A leading zero validates but
-          is not preserved ("007" is stored as 7). In a two-parter or similar
-          grouping, each part takes its own position in the sequence rather than
-          being sub-numbered.
+          Episode number: the episode's ordinal position within the series.
+          Must be a whole number of zero or greater: negative values, decimals and
+          non-numeric values all fail XSD validation. Some rights systems count
+          episodes from 0 and others from 1; both conventions are accepted.
+          A leading zero validates but is not preserved ("007" is stored as 7).
+          In a two-parter or similar grouping, each part takes its own position in
+          the sequence rather than being sub-numbered.
+          TEP does not check that episode numbers are unique within a project.
+          Duplicates are ingested without error but cannot be told apart in the
+          TEP interface used to map contributors to episodes, so each episode in
+          a project should carry a distinct number.
           Note this is not the broadcaster's internal episode identifier (that is
           the id attribute).
         </xs:documentation>
@@ -311,7 +316,7 @@
           must be supplied. The name, slotLength and number attributes remain
           required by the schema but their values are ignored: name may be an
           empty string; slotLength must be a valid ISO 8601 duration (e.g.
-          "PT0S"); number must be a valid positive whole number (e.g. "1").
+          "PT0S"); number must be a valid whole number of zero or greater (e.g. "1").
           Child elements should be omitted.
         </xs:documentation>
       </xs:annotation>
