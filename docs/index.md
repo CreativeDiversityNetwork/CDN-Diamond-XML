@@ -23,6 +23,7 @@ Each document type has its own standalone XSD schema. PRE-TX and POST-TX data ar
 |------|-------------|
 | [Diamond2_PreTX_v1.xsd](Diamond2_PreTX_v1.xsd) | XSD schema for PRE-TX (Programmes) documents |
 | [Diamond2_PostTX_v1.xsd](Diamond2_PostTX_v1.xsd) | XSD schema for POST-TX (Publications) documents |
+| [tep-pdx-report-v1.xsd](tep-pdx-report-v1.xsd) | XSD schema for the status and error reports TEP writes back after processing a file (namespace `urn:tep:pdx:report:1.0`, authored by TEP) |
 | [Diamond2_PreTX_Example.xml](Diamond2_PreTX_Example.xml) | Example PRE-TX document |
 | [Diamond2_PostTX_Example.xml](Diamond2_PostTX_Example.xml) | Example POST-TX document |
 | [Diamond2_XML_Field_Reference_and_Implementation_Notes.md](Diamond2_XML_Field_Reference_and_Implementation_Notes.md) | Field-by-field reference and implementation guidance (canonical version, maintained in Markdown) |
@@ -94,7 +95,7 @@ XML files are exchanged via Amazon S3. Each broadcaster has two dedicated S3 buc
   └── errors/      # rejected files with error reports
 ```
 
-Files in `incoming/` are processed in lexical order of filename, so choose a naming convention that sorts in the order you intend files to be ingested (lead with a sortable date or timestamp, and make sure Pre-TX files sort before any Post-TX files that depend on them). The entire file is accepted or rejected as a unit — there is no partial ingestion. Status files and error reports are retained for 7 days.
+Files in `incoming/` are processed in lexical order of filename, so choose a naming convention that sorts in the order you intend files to be ingested (lead with a sortable date or timestamp, and make sure Pre-TX files sort before any Post-TX files that depend on them). The entire file is accepted or rejected as a unit — there is no partial ingestion. Both the status file and the error report are XML documents in the `urn:tep:pdx:report:1.0` namespace, defined by [tep-pdx-report-v1.xsd](tep-pdx-report-v1.xsd) and described in §6 of the exchange protocol document. Status files and error reports are retained for 7 days.
 
 See [Diamond2_S3_XML_Exchange_Protocol.md](Diamond2_S3_XML_Exchange_Protocol.md) and [Diamond2_S3_Authentication.md](Diamond2_S3_Authentication.md) for full details on the delivery mechanism, file naming guidance, and AWS authentication setup.
 

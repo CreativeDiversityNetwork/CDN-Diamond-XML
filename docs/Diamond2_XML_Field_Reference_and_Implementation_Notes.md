@@ -19,6 +19,7 @@
 | 5.13 | 13/7/2026 | Added "TEP Ingestion Validation" section consolidating in one place the application-level validation rules TEP applies at ingestion, previously documented only in their individual sections. |
 | 5.14 | 29/7/2026 | Episode number attribute is now mandatory and must be a positive whole number, enforced by the Pre-TX XSD.<br>Episode slotLength may now be a zero duration (PT0S) where the slot length is not yet known.<br>Documented that slotLength is stored to a resolution of one second.<br>Noted that the makerId attribute is proposed for removal.<br>Updated the Ofcom genre code list to include sub-genre codes and documented how sub-genres are encoded.<br>Documented that where both an Ofcom and an OfcomSuper genre are supplied, the supergenre must be the correct parent of the genre.<br>Converted the S3 XML Exchange Protocol and S3 Authentication documents from Word to Markdown, and added file naming / processing order guidance to the Exchange Protocol document. |
 | 5.15 | 23/9/2026 | Episode number attribute may now be zero, as some rights systems count episodes from 0: the Pre-TX XSD type has changed from positive integer to non-negative integer.<br>Added a note that TEP does not reject duplicate episode numbers within a project, but that duplicates lead to a poor user experience when mapping contributors to episodes. |
+| 5.16 | 24/9/2026 | Published the TEP report schema (tep-pdx-report-v1.xsd) and defined the completion status file and error report in the S3 XML Exchange Protocol document (v1.4). Updated cross-references to the error report, and noted that a silently ignored Post-TX publication is detectable only by its absence from the completion status file. |
 
 ## Introduction
 
@@ -374,7 +375,7 @@ A Publication represents either a broadcast transmission or an on-demand availab
 
 **Note 1:** If your transmission tracking system uses version IDs that consist of the episode ID with a suffix (e.g., episode123/01, episode123/02), you should remove the version suffix to provide just the episode ID (e.g., episode123).
 
-**Note 2:** If an unknown episodeId is provided this publication record will silently be ignored. This is intentional. The reasoning for this is that the transmission systems delivering publication data in the Post-TX stream are often quite separate from the commissioning systems that are the source of the Pre-TX data. There are many situations where some content may not exist in the commissioning system, or may exist, but may not have been included in the Pre-TX data feed (e.g. if that content is not being monitored in Diamond). In most cases the transmission logging system will not know if the programme has been sent to Diamond or not, thus filtering out from the transmission data feed episodes that were not included in the Pre-TX data feed will be difficult or impossible. The decision was taken therefore to allow the transmission system to pass publication records for all episodes regardless of whether they were included in the Pre-TX feed, and simply ignore those records where the episode ID is not recognised. Obviously this means that great care needs to be taken to get the episode ID correct, since if it is wrong and thus fails to join up to the intended episode, then no error will be flagged.
+**Note 2:** If an unknown episodeId is provided this publication record will silently be ignored. This is intentional. The reasoning for this is that the transmission systems delivering publication data in the Post-TX stream are often quite separate from the commissioning systems that are the source of the Pre-TX data. There are many situations where some content may not exist in the commissioning system, or may exist, but may not have been included in the Pre-TX data feed (e.g. if that content is not being monitored in Diamond). In most cases the transmission logging system will not know if the programme has been sent to Diamond or not, thus filtering out from the transmission data feed episodes that were not included in the Pre-TX data feed will be difficult or impossible. The decision was taken therefore to allow the transmission system to pass publication records for all episodes regardless of whether they were included in the Pre-TX feed, and simply ignore those records where the episode ID is not recognised. Obviously this means that great care needs to be taken to get the episode ID correct, since if it is wrong and thus fails to join up to the intended episode, then no error will be flagged. The only indication is the absence of an entry for that publication in the completion status file (see §6.2 of the S3 XML Exchange Protocol document).
 
 **Note 3:** A side effect of Note 2 is that the episode must have been presented in the Pre-TX XML feed, before associated transmission records are presented in the Post-TX publication feed, otherwise the publication record will be silently ignored.
 
@@ -562,7 +563,7 @@ If a single field has changed, the entire record should be re-posted including a
 
 In addition to XSD schema validation, TEP applies a number of application-level validation rules when a file is ingested. These rules cannot be expressed in XSD 1.0, so a file may pass XSD validation and still be rejected by TEP. Each rule is described in the relevant section of this document; they are consolidated here for convenience.
 
-If any record in a file fails one of these checks, the whole file is rejected (see the S3 XML Exchange Protocol document for how errors are reported). The one exception is a Post-TX publication record with an unrecognised episode ID, which is silently ignored without affecting the rest of the file.
+If any record in a file fails one of these checks, the whole file is rejected (see §6.1 of the S3 XML Exchange Protocol document for the structure of the error report). The one exception is a Post-TX publication record with an unrecognised episode ID, which is silently ignored without affecting the rest of the file. Such a record produces no entry in the completion status file, which is the only indication the sender receives that it was not applied (see §6.2 of the S3 XML Exchange Protocol document).
 
 **Both feeds:**
 
@@ -621,7 +622,7 @@ A single `<ChannelPlatform>` that contains both an isCore="true" `<SubChannel>` 
 
 Similarly, a `<ChannelPlatform>` cannot contain more than one `<SubChannel>` with isCore="true".
 
-These constraints cannot be expressed in XSD 1.0, so they are enforced at TEP's ingestion layer. Affected records will be rejected and the error reported back via the standard error feedback channel.
+These constraints cannot be expressed in XSD 1.0, so they are enforced at TEP's ingestion layer. Affected records will be rejected and the error reported in the error report described in §6.1 of the S3 XML Exchange Protocol document.
 
 ### Examples
 

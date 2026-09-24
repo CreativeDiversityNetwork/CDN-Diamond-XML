@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tep="urn:tep:pdx:report:1.0"
+           targetNamespace="urn:tep:pdx:report:1.0"
+           elementFormDefault="qualified"
+           version="1.0">
+
+  <xs:annotation>
+    <xs:documentation>
+      TEP Programme Data Exchange (PDX) report schema v1.0.
+
+      Diamond 2 PDX is an exchange in which a Commissioner (the Sender) drops
+      programme metadata as XML into a bucket, and TEP (the Receiver) ingests
+      it. This schema defines the two reports TEP writes back into that same
+      bucket once a file has been processed:
+
+        complete/&lt;base&gt;.status.xml   root statusReport   written on success
+        errors/&lt;base&gt;.errors.xml     root errorReport    written on failure
+
+      In both names the source file's .xml extension is REPLACED, not appended
+      to: source-file.xml produces source-file.status.xml.
+
+      Exactly one of the two is written per processed file. A successful file
+      is reported record by record; a failed file is reported as a whole,
+      because a failure rejects the entire file.
+
+      What never appears in these reports
+      -----------------------------------
+      A Commissioner may lock a field on a project or episode, which makes
+      that field read-only to everyone else. When an incoming value is
+      dropped because another party holds a lock on that field, the report
+      says the value was dropped and which field it was — but never the
+      identity of the party holding the lock. That party is a different
+      Commissioner, frequently a competitor, and naming them would disclose
+      one customer's interest in a programme to another.
+
+      For the same reason, neither report carries the internal diagnostic
+      context attached to an error or warning as it travels through the
+      pipeline. That context can contain fragments of the submitted document,
+      so the attributes below are a fixed allowlist rather than a dump.
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- ================================================================ -->
+  <!-- Shared types                                                     -->
+  <!-- ================================================================ -->
+
+  <xs:simpleType name="SchemaVersion">
+    <xs:annotation>
+      <xs:documentation>
+        Revision identifier for this report schema. A new value is added here
+        each time a non-breaking revision ships, so a consumer can tell which
+        revision produced a report it is reading. This mirrors the
+        schemaVersion attribute the Diamond 2 data schemas carry on their
+        Document root.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="1.0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="Warning">
+    <xs:annotation>
+      <xs:documentation>
+        Something worth telling the Commissioner that did not, by itself,
+        stop a record being accepted.
+
+        The commonest warning is a dropped field: a value in the submitted
+        document was not applied because another party holds that field
+        locked. The optional attributes below describe such a drop. They are
+        absent on warnings of other kinds.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="code" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Stable machine-readable identifier for the kind of warning, safe to
+          branch on. Codes are added over time, so treat an unrecognised code
+          as informational rather than rejecting the report.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="message" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Human-readable explanation, in English. Intended for a person
+          triaging the file; do not parse it.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="field" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          Name of the field the warning concerns, for example genre.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="droppedFor" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          TEP's identifier for the Commissioner whose incoming value was
+          discarded — for a file sent through this exchange, the Sender
+          itself. It is a company identifier, not a pointer to a record: the
+          record is named by the enclosing programme element. The
+          Commissioner holding the lock is never named. Present only on a
+          dropped-field warning.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="projectId" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          TEP's internal identifier for the project the dropped field belongs
+          to. It is not the Commissioner's own programme identifier — that is
+          the id attribute of the enclosing programme element. Present only
+          on a dropped-field warning.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="episodeNumber" type="xs:integer" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          Episode the dropped field belongs to, when the drop was on an
+          episode rather than on the project itself.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="Error">
+    <xs:annotation>
+      <xs:documentation>
+        A fault that stopped the file being ingested. Because rejection is
+        all-or-nothing, any error at all means nothing in the file was
+        written.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="code" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Stable machine-readable identifier for the kind of error, safe to
+          branch on. Codes are added over time, so treat an unrecognised code
+          as a generic failure rather than rejecting the report.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="message" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Human-readable explanation, in English. Intended for a person
+          triaging the file; do not parse it.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="severity" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          error    — the submitted data was rejected.
+          critical — processing itself failed. The submitted data may be
+                     valid; resubmitting it is reasonable.
+        </xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="error"/>
+          <xs:enumeration value="critical"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="field" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          Name of the field the error concerns, where the fault is
+          attributable to one field.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="line" type="xs:positiveInteger" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          1-based line of the submitted file this error concerns, where the
+          fault can be placed. Absent when it cannot be. No column is given:
+          the XML parser reports 0 for every one of these, and a column of 0
+          is worse than no column.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <!-- ================================================================ -->
+  <!-- complete/<base>.status.xml                                       -->
+  <!-- ================================================================ -->
+
+  <xs:element name="statusReport">
+    <xs:annotation>
+      <xs:documentation>
+        The receipt for a file that was ingested successfully, written to the
+        complete/ prefix.
+
+        It carries one programme element per record in the source file, each
+        saying whether that record was created or updated. The Exchange
+        Protocol fixes those two status values and the one-element-per-record
+        rule; the root element, namespace and the attributes below are TEP's.
+
+        The element is spelled programme in lower case, which is how the
+        Exchange Protocol writes it. Do not confuse it with the upper-case
+        Project element of the Diamond 2 data schemas — that belongs to a
+        different namespace and describes submitted data, not a result.
+
+        A record that was skipped rather than written gets no programme
+        element: there is no created-or-updated answer to give for it.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="programme" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="warning" type="tep:Warning"
+                          minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+            <xs:attribute name="id" type="xs:string" use="required">
+              <xs:annotation>
+                <xs:documentation>
+                  The Commissioner's own programme identifier — the id
+                  attribute of the Project element as it was submitted. This
+                  is deliberately the sender's identifier and not TEP's
+                  internal one, so a report can be reconciled against the
+                  file that produced it without a lookup.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="status" use="required">
+              <xs:annotation>
+                <xs:documentation>
+                  created — this record did not exist before and was created.
+                  updated — this record matched an existing one, which was
+                            updated in place.
+                </xs:documentation>
+              </xs:annotation>
+              <xs:simpleType>
+                <xs:restriction base="xs:string">
+                  <xs:enumeration value="created"/>
+                  <xs:enumeration value="updated"/>
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:attribute>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="schemaVersion" type="tep:SchemaVersion" use="required"/>
+      <xs:attribute name="file" type="xs:string" use="required">
+        <xs:annotation>
+          <xs:documentation>
+            Bare name of the source file this report is about, without any
+            prefix — for example source-file.xml.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="processedAt" type="xs:dateTime" use="required">
+        <xs:annotation>
+          <xs:documentation>
+            When the file finished processing, in UTC. This is not the time
+            it was uploaded.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ================================================================ -->
+  <!-- errors/<base>.errors.xml                                         -->
+  <!-- ================================================================ -->
+
+  <xs:element name="errorReport">
+    <xs:annotation>
+      <xs:documentation>
+        The diagnostic for a file that was rejected, written to the errors/
+        prefix beside the source file, which is moved there unchanged.
+
+        Rejection is all-or-nothing: if any record in the file is invalid, the
+        whole file is rejected and nothing in it is written. So this report
+        always describes a file that changed nothing, however many of its
+        records were individually fine.
+
+        Its job is to say which records caused that:
+
+          file        faults that belong to no single record — the document
+                      could not be parsed, or failed validation as a whole.
+          programmes  faults attributable to individual records, one
+                      programme element each.
+
+        Either element is omitted entirely when it would be empty. Records
+        that were themselves fine are not listed, so that the records needing
+        a fix are not buried among them.
+
+        Warnings raised against a record that was itself fine do not appear
+        here. Nothing in the file was written, so there is no applied change
+        for such a warning to describe; warnings of that kind are reported on
+        the completion status file when the file is later ingested
+        successfully.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="file" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+              Faults belonging to the document as a whole rather than to any
+              one record.
+            </xs:documentation>
+          </xs:annotation>
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="error" type="tep:Error"
+                          minOccurs="0" maxOccurs="unbounded"/>
+              <xs:element name="warning" type="tep:Warning"
+                          minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="programmes" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+              The records that caused the rejection, one programme element
+              each.
+            </xs:documentation>
+          </xs:annotation>
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="programme" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="error" type="tep:Error"
+                                minOccurs="0" maxOccurs="unbounded"/>
+                    <xs:element name="warning" type="tep:Warning"
+                                minOccurs="0" maxOccurs="unbounded"/>
+                  </xs:sequence>
+                  <xs:attribute name="id" type="xs:string" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>
+                        The Commissioner's own programme identifier, as
+                        submitted.
+
+                        Optional here, unlike on the completion status file: a
+                        record can fail before it has been identified — a
+                        malformed identifier, for instance — and in that case
+                        there is no identifier to report back. The fault still
+                        belongs to one record, so it is reported as a
+                        programme rather than against the file.
+                      </xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="schemaVersion" type="tep:SchemaVersion" use="required"/>
+      <xs:attribute name="file" type="xs:string" use="required">
+        <xs:annotation>
+          <xs:documentation>
+            Bare name of the source file this report is about, without any
+            prefix — for example source-file.xml. The rejected file itself is
+            in the same prefix under this name.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="processedAt" type="xs:dateTime" use="required">
+        <xs:annotation>
+          <xs:documentation>
+            When the file finished processing, in UTC. This is not the time
+            it was uploaded.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="stage" type="xs:string" use="required">
+        <xs:annotation>
+          <xs:documentation>
+            The stage of processing the file failed at, as a triage hint when
+            a Commissioner and TEP are reading the same report — for example
+            VALIDATING or PERSISTING.
+
+            Free text rather than a fixed list, so that adding a stage on the
+            TEP side cannot invalidate reports already sitting in a
+            Commissioner's bucket. Do not branch on it; branch on the error
+            codes.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="summary" type="xs:string" use="required">
+        <xs:annotation>
+          <xs:documentation>
+            One-line human-readable statement of why the file was rejected,
+            truncated if long. The errors below carry the detail.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>
