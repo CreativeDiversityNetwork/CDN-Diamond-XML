@@ -8,6 +8,7 @@
 | 1.2 | 29/7/2026 | Converted from Word to Markdown to simplify change tracking and enable external contributions via GitHub.<br>Corrected the XML envelope example to match the published schemas (`Document` root element, `urn:cdn:pdx:v1` namespace).<br>Fixed section numbering and cross-references.<br>Expanded the filename rules with guidance on naming patterns and processing order. |
 | 1.3 | 29/7/2026 | Corrected the bucket layout: live and staging are separate dedicated buckets (not subdirectories of a shared sender root), each with incoming/, complete/ and errors/ at the top level. |
 | 1.4 | 24/9/2026 | Defined the completion status file and error report (§6.1, §6.2). Both are XML documents in the `urn:tep:pdx:report:1.0` namespace, defined by the TEP report schema `tep-pdx-report-v1.xsd`, now published alongside the Diamond 2 data schemas. Replaced the "to be published separately" placeholders with the report structure, envelope attributes, per-record rules, error severity and the error code contract. |
+| 1.5 | 25/9/2026 | Corrected the §6.1 error code contract against TEP's current implementation: `SCHEMA_VALIDATION_FAILED` and the `SCHEMA_ERROR_<n>` prefix-match fallback never shipped — TEP's validator throws rather than returning a partial result, so every XSD violation is reported individually as its own `SCHEMA_VALIDATION_EXCEPTION` carrying the violation's line number. The code list is closed (exact-match, no prefix), not illustrative; added the complete 92-value list. |
 
 ## 1. Purpose
 
@@ -168,16 +169,16 @@ Example:
 
 Error and warning codes are stable strings that a Sender can safely branch on. Three rules apply:
 
+- **The list is closed.** Every code is an exact, enumerable value. A Sender-side handler can match on the whole string and never needs a prefix match.
 - **The list grows over time.** TEP adds codes as new checks are introduced. Treat an unrecognised error code as a generic failure, and an unrecognised warning code as informational, rather than rejecting the report.
-- **XSD faults may arrive as `SCHEMA_ERROR_<n>`.** Where TEP's validator cannot map an XSD violation to a named code it falls back to `SCHEMA_ERROR_` followed by the underlying libxml2 error number. Match on the prefix rather than the whole value.
-- **The message carries the detail.** The code identifies the kind of fault; the `message`, `field` and `line` attributes say where it is and what was wrong.
+- **The message carries the detail.** The code identifies the kind of fault; the `message`, `field` and `line` attributes say where it is and what was wrong. Every XSD violation in the submitted document is reported individually, each as its own `SCHEMA_VALIDATION_EXCEPTION` carrying the `line` of the submitted file it sits on.
 
-The codes a Sender is most likely to encounter are listed below alongside the rule each relates to. The list is illustrative rather than exhaustive. The rules themselves are documented in the [TEP Ingestion Validation](Diamond2_XML_Field_Reference_and_Implementation_Notes.md#tep-ingestion-validation) section of the Field Reference.
+The codes a Sender is most likely to encounter are listed below alongside the rule each relates to. The rules themselves are documented in the [TEP Ingestion Validation](Diamond2_XML_Field_Reference_and_Implementation_Notes.md#tep-ingestion-validation) section of the Field Reference.
 
 | Code | Reported against | Meaning |
 | --- | --- | --- |
 | `XML_PARSE_ERROR` | file | The file is not well-formed XML. |
-| `SCHEMA_VALIDATION_FAILED` | file | The file failed validation against the Diamond 2 XSD. More specific codes such as `MISSING_REQUIRED_ATTRIBUTE`, `MISSING_REQUIRED_ELEMENT`, `ENUMERATION_VALIDATION_ERROR` and `DATATYPE_VALIDATION_ERROR`, or the `SCHEMA_ERROR_<n>` fallback, identify the individual violations. |
+| `SCHEMA_VALIDATION_EXCEPTION` | file | The file failed validation against the Diamond 2 XSD. Each violation in the document is reported individually as its own `SCHEMA_VALIDATION_EXCEPTION`, with `line` giving the 1-based line of the submitted file it sits on. |
 | `UNSUPPORTED_XML_NAMESPACE` | file | The `Document` root element is not in the `urn:cdn:pdx:v1` namespace. |
 | `UNSUPPORTED_SCHEMA_VERSION` | file | The `schemaVersion` attribute is not a revision TEP recognises. |
 | `PROCESSING_ERROR`, `VALIDATION_TIMEOUT` | file | Processing failed on the TEP side (`severity="critical"`). Resubmit the file unchanged. |
@@ -192,6 +193,24 @@ The codes a Sender is most likely to encounter are listed below alongside the ru
 | `PUBLICATION_REMOVAL_MISSING_ID` | record | A Publication with `remove="true"` has no `publicationId`. |
 | `INVALID_CORE_MIXED_WITH_REGIONAL` | record | A ChannelPlatform combines an `isCore="true"` SubChannel with other SubChannels, or contains more than one `isCore="true"` SubChannel. |
 | `FIELD_LOCK_VALUE_DROPPED` | warning | A submitted value was not applied because another party holds a lock on that field (see §6.2). |
+
+#### The complete code list
+
+92 values, gathered from every site in TEP's implementation that emits one. This is the full closed set the two rules above apply to.
+
+| Group | Codes |
+| --- | --- |
+| Orchestration: the file never entered the pipeline | `INVALID_FILE_KEY`, `PROCESSING_ERROR` |
+| Parsing | `XML_PARSE_ERROR`, `XML_PARSING_ERROR`, `XML_VALIDATION_FAILED` |
+| Validation system faults (TEP's, not the Sender's) | `CONTENT_TOO_LARGE`, `FILE_NOT_FOUND`, `VALIDATION_SYSTEM_ERROR`, `VALIDATION_TIMEOUT`, `XXE_ATTACK_DETECTED`, `BUSINESS_RULE_SYSTEM_ERROR`, `RULE_EXECUTION_ERROR`, `RULE_EXECUTION_TIMEOUT` |
+| Envelope: namespace and schemaVersion | `UNSUPPORTED_XML_NAMESPACE`, `UNSUPPORTED_SCHEMA_VERSION` |
+| XSD validation | `CUSTOM_SCHEMA_VALIDATION_ERROR`, `SCHEMA_PARSE_ERROR`, `SCHEMA_VALIDATION_EXCEPTION`, `SCHEMA_VALIDATION_SYSTEM_ERROR` |
+| Hierarchy rules (HR001-HR003) | `CHANNEL_PLATFORM_LABEL_MISSING`, `EPISODE_ID_MISSING`, `EPISODE_NAME_MISSING`, `EPISODE_SLOT_LENGTH_MISSING`, `HIERARCHY_VALIDATION_ERROR`, `INVALID_AVAILABILITY_MODE`, `INVALID_PROJECT_MEDIUM`, `INVALID_PROJECT_TYPE`, `INVALID_ROOT_ELEMENT`, `PROJECT_ID_MISSING`, `PROJECT_MEDIUM_MISSING`, `PROJECT_MISSING`, `PROJECT_NAME_MISSING`, `PROJECT_WITHOUT_EPISODE`, `PUBLICATION_AVAILABILITY_MODE_MISSING`, `PUBLICATION_EPISODE_ID_MISSING`, `PUBLICATION_MISSING`, `PUBLICATION_WINDOW_CLOSURE_NOT_ALLOWED_FOR_BROADCAST`, `PUBLICATIONS_VALIDATION_ERROR`, `SCHEMA_VERSION_MISSING`, `STRUCTURE_VALIDATION_ERROR`, `SUPPLIER_ID_MISSING`, `SUPPLIER_MISSING` |
+| Business rules (BR001-BR005) | `DATE_LOGIC_ERROR`, `DATE_VALIDATION_ERROR`, `DATETIME_LOGIC_ERROR`, `DURATION_VALIDATION_ERROR`, `DUPLICATE_IDENTIFIER`, `IDENTIFIER_VALIDATION_ERROR`, `INVALID_FIRST_DELIVERY_DATE_TARGET`, `INVALID_GREENLIGHT_DATE`, `INVALID_PUBLICATION_DATETIME`, `INVALID_RELEASE_DATE`, `INVALID_SLOT_LENGTH_FORMAT`, `INVALID_WINDOW_CLOSURE_DATETIME`, `PUBLICATION_DATETIME_VALIDATION_ERROR`, `PUBLICATION_REMOVAL_MISSING_ID`, `PUBLICATION_REMOVAL_VALIDATION_ERROR`, `SLOT_LENGTH_TOO_LONG`, `SLOT_LENGTH_TOO_SHORT` |
+| Data integrity rules (DI002, DI003, DI005, PV001) | `DUPLICATE_ID`, `ID_VALIDATION_ERROR`, `INVALID_CORE_MIXED_WITH_REGIONAL`, `INVALID_DURATION_FORMAT`, `PV001_VALIDATION_ERROR`, `REQUIRED_ATTRIBUTE_MISSING`, `REQUIRED_FIELD_MISSING`, `REQUIRED_FIELD_VALIDATION_ERROR` |
+| Genre rules (GF001, GF002, GF004) | `COMMISSIONER_GENRE_MULTIPLE`, `GENRE_CODE_VALIDATION_ERROR`, `GENRE_FORMAT_VALIDATION_ERROR`, `GENRE_TYPE_INVALID`, `GENRE_TYPE_MISSING`, `GENRE_VALIDATION_ERROR`, `GENRE_VALUE_NOT_STRING`, `GENRE_VALUE_TOO_LONG`, `OFCOM_GENRE_CODE_UNKNOWN`, `OFCOM_GENRE_MISSING`, `OFCOM_GENRE_MULTIPLE`, `OFCOM_GENRE_SUPER_MISMATCH`, `OFCOM_SUPER_CODE_UNKNOWN`, `OFCOM_SUPER_GENRE_MULTIPLE` |
+| Per-target processing and deletion | `DELETION_BLOCKED_BY_VALIDATION_ERRORS`, `DELETION_BLOCKED_MISSING_EPISODE_ID`, `DELETION_SERVICE_UNAVAILABLE`, `EPISODE_DELETION_ERROR`, `EPISODE_DELETION_SKIPPED`, `PROJECT_DELETION_SKIPPED`, `PROJECT_TARGET_ERROR`, `PUBLICATION_DELETION_SKIPPED`, `PUBLICATION_EPISODE_NOT_FOUND`, `PUBLICATION_TARGET_ERROR` |
+| Field Lock | `FIELD_LOCK_VALUE_DROPPED` |
 
 ### 6.2. Completion Status File
 
