@@ -8,7 +8,7 @@
 | 1.2 | 29/7/2026 | Converted from Word to Markdown to simplify change tracking and enable external contributions via GitHub.<br>Corrected the XML envelope example to match the published schemas (`Document` root element, `urn:cdn:pdx:v1` namespace).<br>Fixed section numbering and cross-references.<br>Expanded the filename rules with guidance on naming patterns and processing order. |
 | 1.3 | 29/7/2026 | Corrected the bucket layout: live and staging are separate dedicated buckets (not subdirectories of a shared sender root), each with incoming/, complete/ and errors/ at the top level. |
 | 1.4 | 24/9/2026 | Defined the completion status file and error report (§6.1, §6.2). Both are XML documents in the `urn:tep:pdx:report:1.0` namespace, defined by the TEP report schema `tep-pdx-report-v1.xsd`, now published alongside the Diamond 2 data schemas. Replaced the "to be published separately" placeholders with the report structure, envelope attributes, per-record rules, error severity and the error code contract. |
-| 1.5 | 25/9/2026 | Corrected the §6.1 error code contract against TEP's current implementation: `SCHEMA_VALIDATION_FAILED` and the `SCHEMA_ERROR_<n>` prefix-match fallback never shipped — TEP's validator throws rather than returning a partial result, so every XSD violation is reported individually as its own `SCHEMA_VALIDATION_EXCEPTION` carrying the violation's line number. The code list is closed (exact-match, no prefix), not illustrative; added the complete 92-value list. |
+| 1.5 | 25/9/2026 | Corrected the §6.1 error code contract against TEP's current implementation: `SCHEMA_VALIDATION_FAILED` and the `SCHEMA_ERROR_<n>` prefix-match fallback never shipped — TEP's validator throws rather than returning a partial result, so every XSD violation is reported individually as its own `SCHEMA_VALIDATION_EXCEPTION` carrying the violation's line number. The code list is closed (exact-match, no prefix), not illustrative; added the complete 92-value list.<br>Corrected `DUPLICATE_ID` (§6.1) to cover Episode ID as well as Project ID, and documented `DUPLICATE_IDENTIFIER` (§6.2) as the same check's warning-severity counterpart, which never rejects a file and appears only as a `<warning>` on the status file. |
 
 ## 1. Purpose
 
@@ -182,7 +182,7 @@ The codes a Sender is most likely to encounter are listed below alongside the ru
 | `UNSUPPORTED_XML_NAMESPACE` | file | The `Document` root element is not in the `urn:cdn:pdx:v1` namespace. |
 | `UNSUPPORTED_SCHEMA_VERSION` | file | The `schemaVersion` attribute is not a revision TEP recognises. |
 | `PROCESSING_ERROR`, `VALIDATION_TIMEOUT` | file | Processing failed on the TEP side (`severity="critical"`). Resubmit the file unchanged. |
-| `DUPLICATE_ID` | record | The same Project ID appears more than once in a Pre-TX file (one update per project per file). |
+| `DUPLICATE_ID` | record | The same Project ID or the same Episode ID appears more than once in a Pre-TX file (one update per project, and per episode, per file). |
 | `PROJECT_WITHOUT_EPISODE` | record | A non-removal Project contains no Episode. |
 | `REQUIRED_FIELD_MISSING` | record | A non-removal record omits an element that is optional in the XSD only so that removal records can validate, such as `ChannelPlatforms` or `PublicationDateTime` on a Publication. |
 | `OFCOM_GENRE_MISSING`, `OFCOM_GENRE_MULTIPLE` | record | A Genres container does not contain exactly one Ofcom genre. |
@@ -238,6 +238,8 @@ The commonest warning is a dropped field. A Commissioner can lock a field on a p
 | `episodeNumber` | The episode the dropped field belongs to, where the drop was on an episode rather than on the project itself (dropped-field warnings only). |
 
 The Commissioner holding the lock is never identified.
+
+A second warning, `DUPLICATE_IDENTIFIER`, can also appear here. It is the same duplicate-identifier check that produces `DUPLICATE_ID` in §6.1, but raised for a duplicate that does not, by itself, reject the file, so it is reported as a `<warning>` on the record concerned rather than as an `<error>`. It carries only the required `code` and `message` attributes — the dropped-field-only attributes above do not apply to it.
 
 Example:
 
