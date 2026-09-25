@@ -9,6 +9,7 @@
 | 1.3 | 29/7/2026 | Corrected the bucket layout: live and staging are separate dedicated buckets (not subdirectories of a shared sender root), each with incoming/, complete/ and errors/ at the top level. |
 | 1.4 | 24/9/2026 | Defined the completion status file and error report (§6.1, §6.2). Both are XML documents in the `urn:tep:pdx:report:1.0` namespace, defined by the TEP report schema `tep-pdx-report-v1.xsd`, now published alongside the Diamond 2 data schemas. Replaced the "to be published separately" placeholders with the report structure, envelope attributes, per-record rules, error severity and the error code contract. |
 | 1.5 | 25/9/2026 | Corrected the §6.1 error code contract against TEP's current implementation: `SCHEMA_VALIDATION_FAILED` and the `SCHEMA_ERROR_<n>` prefix-match fallback never shipped — TEP's validator throws rather than returning a partial result, so every XSD violation is reported individually as its own `SCHEMA_VALIDATION_EXCEPTION` carrying the violation's line number. The code list is closed (exact-match, no prefix), not illustrative; added the complete 92-value list.<br>Corrected `DUPLICATE_ID` (§6.1) to cover Episode ID as well as Project ID, and documented `DUPLICATE_IDENTIFIER` (§6.2) as the same check's warning-severity counterpart, which never rejects a file and appears only as a `<warning>` on the status file. |
+| 1.6 | 25/9/2026 | Corrected the §6.1 curated table's "file is not well-formed XML" row from `XML_PARSE_ERROR` to `XML_VALIDATION_FAILED`. TEP has a tracked defect (internal ref TEP2-219) where a not-well-formed file today emits both codes for the one fault, with `XML_PARSE_ERROR` incorrectly carrying `severity="critical"`. This table describes the corrected behaviour that fix will produce — one `XML_VALIDATION_FAILED`/`severity="error"` per not-well-formed file — not the double-reporting live today. `XML_PARSE_ERROR` remains valid for a separate, rarer DOM-parser-disagreement case. |
 
 ## 1. Purpose
 
@@ -177,7 +178,7 @@ The codes a Sender is most likely to encounter are listed below alongside the ru
 
 | Code | Reported against | Meaning |
 | --- | --- | --- |
-| `XML_PARSE_ERROR` | file | The file is not well-formed XML. |
+| `XML_VALIDATION_FAILED` | file | The file is not well-formed XML. `field` may carry a `Line X:Y` location string from the XML parser, when available. `XML_PARSE_ERROR` (in the complete code list below) is a distinct, rarer code for a DOM-level parse disagreement, not an alternative form of this one. |
 | `SCHEMA_VALIDATION_EXCEPTION` | file | The file failed validation against the Diamond 2 XSD. Each violation in the document is reported individually as its own `SCHEMA_VALIDATION_EXCEPTION`, with `line` giving the 1-based line of the submitted file it sits on. |
 | `UNSUPPORTED_XML_NAMESPACE` | file | The `Document` root element is not in the `urn:cdn:pdx:v1` namespace. |
 | `UNSUPPORTED_SCHEMA_VERSION` | file | The `schemaVersion` attribute is not a revision TEP recognises. |
