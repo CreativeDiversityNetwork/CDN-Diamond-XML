@@ -17,9 +17,10 @@
 | 5.11 | 13/7/2026 | Added note that a file may contain multiple Publications containers, as permitted by the XSD. |
 | 5.12 | 13/7/2026 | Added note that TEP cannot process multiple updates to the same project within a single Pre-TX file: consolidate to one Project record per project ID per file (updates across separate files are unaffected). Noted that some broadcasters split update streams into one update per file to simplify error handling. |
 | 5.13 | 13/7/2026 | Added "TEP Ingestion Validation" section consolidating in one place the application-level validation rules TEP applies at ingestion, previously documented only in their individual sections. |
-| 5.14 | 29/7/2026 | Episode number attribute is now mandatory and must be a positive whole number, enforced by the Pre-TX XSD.<br>Episode slotLength may now be a zero duration (PT0S) where the slot length is not yet known.<br>Documented that slotLength is stored to a resolution of one second.<br>Noted that the makerId attribute is proposed for removal.<br>Updated the Ofcom genre code list to include sub-genre codes and documented how sub-genres are encoded.<br>Documented that where both an Ofcom and an OfcomSuper genre are supplied, the supergenre must be the correct parent of the genre.<br>Converted the S3 XML Exchange Protocol and S3 Authentication documents from Word to Markdown, and added file naming / processing order guidance to the Exchange Protocol document. |
+| 5.14 | 29/7/2026 | Episode number attribute is now mandatory and must be a positive whole number, enforced by the Pre-TX XSD.<br>Episode slotLength may now be a zero duration (PT0S) where the slot length is not yet known.<br>Documented that slotLength is stored to a resolution of one second.<br>Updated the Ofcom genre code list to include sub-genre codes and documented how sub-genres are encoded.<br>Documented that where both an Ofcom and an OfcomSuper genre are supplied, the supergenre must be the correct parent of the genre.<br>Converted the S3 XML Exchange Protocol and S3 Authentication documents from Word to Markdown, and added file naming / processing order guidance to the Exchange Protocol document. |
 | 5.15 | 23/9/2026 | Episode number attribute may now be zero, as some rights systems count episodes from 0: the Pre-TX XSD type has changed from positive integer to non-negative integer.<br>Added a note that TEP does not reject duplicate episode numbers within a project, but that duplicates lead to a poor user experience when mapping contributors to episodes. |
 | 5.16 | 24/9/2026 | Published the TEP report schema (tep-pdx-report-v1.xsd) and defined the completion status file and error report in the S3 XML Exchange Protocol document (v1.4). Updated cross-references to the error report, and noted that a silently ignored Post-TX publication is detectable only by its absence from the completion status file. |
+| 5.17 | 29/9/2026 | Added guidance on AWS access keys, including the 12-month rotation requirement and the key rotation utility, to the S3 Authentication document. |
 
 ## Introduction
 
@@ -316,8 +317,6 @@ The episode number is used in several parts of the TEP user interface and no sen
 **Type:** String
 
 **Description:** Optional supplier ID of the production company creating the content. Used when paperwork completion is outsourced to a different company than the content maker. The parent Supplier object identifies who is completing the paperwork (and who gets access to administer the project in TEP), whilst this field identifies who is actually making the content. This field is for reporting purposes only and does not grant the referenced production company any access to administer the project in TEP. If omitted, defaults to the parent Supplier.id.
-
-**Note:** This attribute is proposed for removal in a future revision, as we are not aware of any organisation populating it. If your organisation needs this field, please get in touch; otherwise it will be removed.
 
 #### `/Document/Programmes/Supplier/Project/Episode/Tags`
 

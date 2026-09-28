@@ -69,6 +69,43 @@ aws s3 cp --sse AES256 your-file.xml s3://tep-xml-ingestion-staging-{broadcaster
 
 You can now use any AWS S3 commands with these temporary credentials.
 
+## Alternative: AWS Access Keys
+
+Cross-account IAM role assumption is the officially supported approach. Where it is not possible for a broadcaster, TEP will instead issue an AWS access key (an access key ID and secret access key) for the broadcaster's bucket. The key is subject to the following conditions:
+
+- **Rotate at least every 12 months.** The key must be replaced with a new one at least once a year.
+- **Rotate keys received by email before use.** Where a key is delivered by email, rotate it immediately on receipt, so that the key that goes into service has never travelled over email.
+
+Each key is issued with permission to manage its own rotation, so you can rotate it whenever you choose without any input from TEP.
+
+### Rotating a Key
+
+The simplest way to rotate a key is the key rotation utility at:
+
+https://lite.creativediversitynetwork.com/key-rotation.html
+
+It needs only the existing access key ID and secret access key, and walks you through the rotation step by step, making all of the necessary AWS API calls for you:
+
+1. It creates a second, new key.
+2. It asks you to put the new key into service and confirm that it works.
+3. It deletes the old key.
+
+The utility runs entirely in your browser: nothing needs to be installed, and your keys are not sent to any system other than AWS.
+
+You can equally build rotation into your own systems using the AWS IAM API (`CreateAccessKey`, then `DeleteAccessKey` once the new key is confirmed working).
+
+### Uploading with an Access Key
+
+With an access key there is no role to assume. Store the key in a named profile, then upload:
+
+```bash
+# Enter the access key ID, secret access key and eu-west-2 when prompted
+aws configure --profile tep
+
+# Upload a file (server-side encryption is required)
+aws s3 cp --sse AES256 your-file.xml s3://tep-xml-ingestion-staging-{broadcaster}/incoming/ --profile tep
+```
+
 ## Setting Up Notifications (Optional)
 
 TEP will send notifications via SNS when your uploaded files have been processed and moved to either the `complete/` or `errors/` directory. You can subscribe to these notifications in several ways:
@@ -141,7 +178,7 @@ The additional permissions for the complete and errors directories are intended 
 
 ### Security Features
 
-- **No long-term credentials** — temporary credentials expire automatically
+- **No long-term credentials** (role assumption) — temporary credentials expire automatically
 - **External ID** prevents the [confused deputy problem](https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html)
 - **Your AWS account** maintains full control over which users/services can assume the role
 - **Dedicated bucket per broadcaster** — complete isolation from other broadcasters
