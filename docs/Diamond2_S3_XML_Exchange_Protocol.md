@@ -10,6 +10,7 @@
 | 1.4 | 24/9/2026 | Defined the completion status file and error report (§6.1, §6.2). Both are XML documents in the `urn:tep:pdx:report:1.0` namespace, defined by the TEP report schema `tep-pdx-report-v1.xsd`, now published alongside the Diamond 2 data schemas. Replaced the "to be published separately" placeholders with the report structure, envelope attributes, per-record rules, error severity and the error code contract. |
 | 1.5 | 25/9/2026 | Corrected the §6.1 error code contract against TEP's current implementation: `SCHEMA_VALIDATION_FAILED` and the `SCHEMA_ERROR_<n>` prefix-match fallback never shipped — TEP's validator throws rather than returning a partial result, so every XSD violation is reported individually as its own `SCHEMA_VALIDATION_EXCEPTION` carrying the violation's line number. The code list is closed (exact-match, no prefix), not illustrative; added the complete 92-value list.<br>Corrected `DUPLICATE_ID` (§6.1) to cover Episode ID as well as Project ID, and documented `DUPLICATE_IDENTIFIER` (§6.2) as the same check's warning-severity counterpart, which never rejects a file and appears only as a `<warning>` on the status file. |
 | 1.6 | 25/9/2026 | Corrected the §6.1 curated table's "file is not well-formed XML" row from `XML_PARSE_ERROR` to `XML_VALIDATION_FAILED`. TEP has a tracked defect (internal ref TEP2-219) where a not-well-formed file today emits both codes for the one fault, with `XML_PARSE_ERROR` incorrectly carrying `severity="critical"`. This table describes the corrected behaviour that fix will produce — one `XML_VALIDATION_FAILED`/`severity="error"` per not-well-formed file — not the double-reporting live today. `XML_PARSE_ERROR` remains valid for a separate, rarer DOM-parser-disagreement case. |
+| 1.7 | 29/9/2026 | Added `EPISODES_PER_FILE_EXCEEDED` (§6.1). TEP now enforces the §3 limit of 1,000 episodes per single XML file on Pre-TX files: a file over the limit is refused whole, straight after parsing, and nothing in it is applied. A limit other than 1,000 can be agreed per Commissioner. The complete code list is now 93 values. |
 
 ## 1. Purpose
 
@@ -182,6 +183,7 @@ The codes a Sender is most likely to encounter are listed below alongside the ru
 | `SCHEMA_VALIDATION_EXCEPTION` | file | The file failed validation against the Diamond 2 XSD. Each violation in the document is reported individually as its own `SCHEMA_VALIDATION_EXCEPTION`, with `line` giving the 1-based line of the submitted file it sits on. |
 | `UNSUPPORTED_XML_NAMESPACE` | file | The `Document` root element is not in the `urn:cdn:pdx:v1` namespace. |
 | `UNSUPPORTED_SCHEMA_VERSION` | file | The `schemaVersion` attribute is not a revision TEP recognises. |
+| `EPISODES_PER_FILE_EXCEEDED` | file | A Pre-TX file carries more `<Episode>` elements than the §3 limit of 1,000, or than the limit agreed with the Commissioner. Removal Episodes count. The whole file is refused and nothing in it is applied. Split it into smaller files and resubmit. Post-TX files have no such limit. |
 | `PROCESSING_ERROR`, `VALIDATION_TIMEOUT` | file | Processing failed on the TEP side (`severity="critical"`). Resubmit the file unchanged. |
 | `DUPLICATE_ID` | record | The same Project ID or the same Episode ID appears more than once in a Pre-TX file (one update per project, and per episode, per file). |
 | `PROJECT_WITHOUT_EPISODE` | record | A non-removal Project contains no Episode. |
@@ -197,7 +199,7 @@ The codes a Sender is most likely to encounter are listed below alongside the ru
 
 #### The complete code list
 
-92 values, gathered from every site in TEP's implementation that emits one. This is the full closed set the two rules above apply to.
+93 values, gathered from every site in TEP's implementation that emits one. This is the full closed set the two rules above apply to.
 
 | Group | Codes |
 | --- | --- |
@@ -205,6 +207,7 @@ The codes a Sender is most likely to encounter are listed below alongside the ru
 | Parsing | `XML_PARSE_ERROR`, `XML_PARSING_ERROR`, `XML_VALIDATION_FAILED` |
 | Validation system faults (TEP's, not the Sender's) | `CONTENT_TOO_LARGE`, `FILE_NOT_FOUND`, `VALIDATION_SYSTEM_ERROR`, `VALIDATION_TIMEOUT`, `XXE_ATTACK_DETECTED`, `BUSINESS_RULE_SYSTEM_ERROR`, `RULE_EXECUTION_ERROR`, `RULE_EXECUTION_TIMEOUT` |
 | Envelope: namespace and schemaVersion | `UNSUPPORTED_XML_NAMESPACE`, `UNSUPPORTED_SCHEMA_VERSION` |
+| File limits: the whole file refused before validation | `EPISODES_PER_FILE_EXCEEDED` |
 | XSD validation | `CUSTOM_SCHEMA_VALIDATION_ERROR`, `SCHEMA_PARSE_ERROR`, `SCHEMA_VALIDATION_EXCEPTION`, `SCHEMA_VALIDATION_SYSTEM_ERROR` |
 | Hierarchy rules (HR001-HR003) | `CHANNEL_PLATFORM_LABEL_MISSING`, `EPISODE_ID_MISSING`, `EPISODE_NAME_MISSING`, `EPISODE_SLOT_LENGTH_MISSING`, `HIERARCHY_VALIDATION_ERROR`, `INVALID_AVAILABILITY_MODE`, `INVALID_PROJECT_MEDIUM`, `INVALID_PROJECT_TYPE`, `INVALID_ROOT_ELEMENT`, `PROJECT_ID_MISSING`, `PROJECT_MEDIUM_MISSING`, `PROJECT_MISSING`, `PROJECT_NAME_MISSING`, `PROJECT_WITHOUT_EPISODE`, `PUBLICATION_AVAILABILITY_MODE_MISSING`, `PUBLICATION_EPISODE_ID_MISSING`, `PUBLICATION_MISSING`, `PUBLICATION_WINDOW_CLOSURE_NOT_ALLOWED_FOR_BROADCAST`, `PUBLICATIONS_VALIDATION_ERROR`, `SCHEMA_VERSION_MISSING`, `STRUCTURE_VALIDATION_ERROR`, `SUPPLIER_ID_MISSING`, `SUPPLIER_MISSING` |
 | Business rules (BR001-BR005) | `DATE_LOGIC_ERROR`, `DATE_VALIDATION_ERROR`, `DATETIME_LOGIC_ERROR`, `DURATION_VALIDATION_ERROR`, `DUPLICATE_IDENTIFIER`, `IDENTIFIER_VALIDATION_ERROR`, `INVALID_FIRST_DELIVERY_DATE_TARGET`, `INVALID_GREENLIGHT_DATE`, `INVALID_PUBLICATION_DATETIME`, `INVALID_RELEASE_DATE`, `INVALID_SLOT_LENGTH_FORMAT`, `INVALID_WINDOW_CLOSURE_DATETIME`, `PUBLICATION_DATETIME_VALIDATION_ERROR`, `PUBLICATION_REMOVAL_MISSING_ID`, `PUBLICATION_REMOVAL_VALIDATION_ERROR`, `SLOT_LENGTH_TOO_LONG`, `SLOT_LENGTH_TOO_SHORT` |
